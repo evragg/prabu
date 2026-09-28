@@ -1,0 +1,126 @@
+{
+  "items": [
+    {
+      "id": "1",
+      "category": "O-Ring",
+      "serialNumber": "BO11870",
+      "name": "O-Ring 50mm NBR",
+      "location": "Module Room",
+      "rack": "Rak 1 - A1",
+      "status": "available"
+    },
+    {
+      "id": "2",
+      "category": "O-Ring",
+      "serialNumber": "BO11871",
+      "name": "O-Ring 70mm Viton",
+      "location": "Module Room",
+      "rack": "Rak 1 - B2",
+      "status": "available"
+    },
+    {
+      "id": "3",
+      "category": "O-Ring",
+      "serialNumber": "BO11872",
+      "name": "O-Ring 30mm Silicone",
+      "location": "Module Room",
+      "rack": "Rak 2 - C1",
+      "status": "checked_out"
+    },
+    {
+      "id": "4",
+      "category": "O-Ring",
+      "serialNumber": "BO11873",
+      "name": "O-Ring 100mm EPDM",
+      "location": "Module Room",
+      "rack": "Rak 2 - D2",
+      "status": "available"
+    },
+    {
+      "id": "5",
+      "category": "O-Ring",
+      "serialNumber": "BO11874",
+      "name": "O-Ring 45mm NBR",
+      "location": "Module Room",
+      "rack": "Rak 3 - B4",
+      "status": "available"
+    },
+    {
+      "id": "6",
+      "category": "O-Ring",
+      "serialNumber": "BO11875",
+      "name": "O-Ring 60mm Viton",
+      "location": "Module Room",
+      "rack": "Rak 1 - C3",
+      "status": "checked_out"
+    },
+    {
+      "id": "7",
+      "category": "O-Ring",
+      "serialNumber": "BO11876",
+      "name": "O-Ring 25mm PTFE",
+      "location": "Module Room",
+      "rack": "Rak 3 - E5",
+      "status": "available"
+    },
+    {
+      "id": "8",
+      "category": "O-Ring",
+      "serialNumber": "BO11877",
+      "name": "O-Ring 80mm NBR",
+      "location": "Module Room",
+      "rack": "Rak 2 - B2",
+      "status": "available"
+    },
+    {
+      "id": "9",
+      "category": "MRTM-2245",
+      "serialNumber": "2245",
+      "name": "MRTM",
+      "location": "Module Room",
+      "rack": "Rak 1 - D4",
+      "status": "checked_out"
+    },
+    {
+      "id": "10",
+      "category": "O-Ring",
+      "serialNumber": "BO11880",
+      "name": "O-Ring 40mm FKM Lab Grade",
+      "location": "Lab",
+      "rack": "Rak 1 - A2",
+      "status": "available"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1",
+      "itemId": "3",
+      "serialNumber": "BO11872",
+      "itemName": "O-Ring 30mm Silicone",
+      "action": "checkout",
+      "person": "Ahmad",
+      "location": "Module Room",
+      "timestamp": "2026-09-01T10:30:00+07:00"
+    },
+    {
+      "id": "log-2",
+      "itemId": "6",
+      "serialNumber": "BO11875",
+      "itemName": "O-Ring 60mm Viton",
+      "action": "checkout",
+      "person": "Budi",
+      "location": "Module Room",
+      "timestamp": "2026-09-01T14:15:00+07:00"
+    },
+    {
+      "id": "log-3",
+      "itemId": "9",
+      "serialNumber": "2245",
+      "itemName": "MRTM",
+      "action": "checkout",
+      "person": "AGUS",
+      "location": "Module Room",
+      "timestamp": "2026-09-01T15:02:34.288Z"
+    }
+  ]
+}
