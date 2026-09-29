@@ -85,9 +85,9 @@
       "id": "10",
       "category": "O-Ring",
       "serialNumber": "BO11880",
-      "name": "O-Ring 40mm FKM Lab Grade",
-      "location": "Lab",
-      "rack": "Rak 1 - A2",
+      "name": "O-Ring 40mm FKM",
+      "location": "Module Room",
+      "rack": "Rak - A2",
       "status": "available"
     }
   ],
