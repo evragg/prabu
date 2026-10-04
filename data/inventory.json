@@ -6,7 +6,7 @@
       "serialNumber": "BO11870",
       "name": "O-Ring 50mm NBR",
       "location": "Module Room",
-      "rack": "Rak 1 - A1",
+      "rack": "Rak - A1",
       "status": "available"
     },
     {
@@ -15,7 +15,7 @@
       "serialNumber": "BO11871",
       "name": "O-Ring 70mm Viton",
       "location": "Module Room",
-      "rack": "Rak 1 - B2",
+      "rack": "Rak - B2",
       "status": "available"
     },
     {
@@ -24,7 +24,7 @@
       "serialNumber": "BO11872",
       "name": "O-Ring 30mm Silicone",
       "location": "Module Room",
-      "rack": "Rak 2 - C1",
+      "rack": "Rak - C1",
       "status": "checked_out"
     },
     {
@@ -33,7 +33,7 @@
       "serialNumber": "BO11873",
       "name": "O-Ring 100mm EPDM",
       "location": "Module Room",
-      "rack": "Rak 2 - D2",
+      "rack": "Rak - D2",
       "status": "available"
     },
     {
@@ -42,7 +42,7 @@
       "serialNumber": "BO11874",
       "name": "O-Ring 45mm NBR",
       "location": "Module Room",
-      "rack": "Rak 3 - B4",
+      "rack": "Rak - B4",
       "status": "available"
     },
     {
@@ -51,7 +51,7 @@
       "serialNumber": "BO11875",
       "name": "O-Ring 60mm Viton",
       "location": "Module Room",
-      "rack": "Rak 1 - C3",
+      "rack": "Rak - C3",
       "status": "checked_out"
     },
     {
@@ -60,7 +60,7 @@
       "serialNumber": "BO11876",
       "name": "O-Ring 25mm PTFE",
       "location": "Module Room",
-      "rack": "Rak 3 - E5",
+      "rack": "Rak - E4",
       "status": "available"
     },
     {
@@ -69,7 +69,7 @@
       "serialNumber": "BO11877",
       "name": "O-Ring 80mm NBR",
       "location": "Module Room",
-      "rack": "Rak 2 - B2",
+      "rack": "Rak - B2",
       "status": "available"
     },
     {
@@ -78,7 +78,7 @@
       "serialNumber": "2245",
       "name": "MRTM",
       "location": "Module Room",
-      "rack": "Rak 1 - D4",
+      "rack": "Rak - D4",
       "status": "checked_out"
     },
     {
