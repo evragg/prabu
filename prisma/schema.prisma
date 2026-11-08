@@ -16,6 +16,7 @@ model Item {
   location     String
   rack         String
   status       String     @default("available") // "available" or "checked_out"
+  quantity     Int        @default(1)            // Stock count for this item
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   logs         LogEntry[]
@@ -29,6 +30,7 @@ model LogEntry {
   action       String   // "checkout" or "return"
   person       String
   location     String
+  quantity     Int      @default(1)  // How many were taken/returned in this transaction
   timestamp    DateTime @default(now())
   item         Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
 }

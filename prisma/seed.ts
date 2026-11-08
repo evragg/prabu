@@ -20,6 +20,7 @@ async function main() {
           location: item.location,
           rack: item.rack,
           status: item.status,
+          quantity: item.quantity ?? 1,
         },
         create: {
           id: item.id,
@@ -29,6 +30,7 @@ async function main() {
           location: item.location,
           rack: item.rack,
           status: item.status,
+          quantity: item.quantity ?? 1,
         },
       });
     }
@@ -42,6 +44,7 @@ async function main() {
           action: log.action,
           person: log.person,
           location: log.location,
+          quantity: log.quantity ?? 1,
           timestamp: new Date(log.timestamp),
         },
       });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const USERS = {
   admin: { password: 'admin', role: 'admin' },
+  evra: { password: 'evra', role: 'admin' },
   prabu: { password: 'prabu', role: 'viewer' },
 };
 
