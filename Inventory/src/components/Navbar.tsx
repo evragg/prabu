@@ -36,6 +36,7 @@ export default function Navbar() {
   const links = [
     { href: '/', label: 'Dashboard', show: true },
     { href: '/location/module-room', label: 'Module Room', show: true },
+    { href: '/location/lab', label: 'Lab', show: true },
     { href: '/logs', label: 'Log Activity', show: true },
     { href: '/admin', label: 'Admin (Kelola Barang)', show: role === 'admin' },
   ];
@@ -44,14 +45,20 @@ export default function Navbar() {
 
   return (
     <nav className="bg-blue-800 text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <svg className="w-8 h-8 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <span className="text-xl font-bold tracking-tight">Inventory System</span>
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="bg-white px-2.5 py-1 rounded-lg shadow-sm flex items-center justify-center h-8 transition-transform group-hover:scale-105">
+              <img
+                src="/slb-logo.png"
+                alt="SLB Logo"
+                className="h-5 w-auto object-contain"
+              />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-100 transition-colors">
+              Inventory System
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -69,7 +76,7 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {role && (
+            {role ? (
               <div className="flex items-center ml-3 pl-3 border-l border-blue-700 space-x-2">
                 <span className="text-xs bg-blue-900/80 text-blue-200 px-2 py-1 rounded font-mono uppercase">
                   {role}
@@ -80,6 +87,18 @@ export default function Navbar() {
                 >
                   Logout
                 </button>
+              </div>
+            ) : (
+              <div className="flex items-center ml-3 pl-3 border-l border-blue-700">
+                <Link
+                  href="/login"
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-colors shadow-sm flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Login Admin</span>
+                </Link>
               </div>
             )}
           </div>
@@ -129,7 +148,7 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {role && (
+            {role ? (
               <div className="pt-3 mt-3 border-t border-blue-800/80 flex items-center justify-between px-4">
                 <span className="text-xs text-blue-200">
                   Login sebagai: <strong className="text-white font-mono uppercase bg-blue-950 px-2 py-0.5 rounded">{role}</strong>
@@ -143,6 +162,19 @@ export default function Navbar() {
                 >
                   Logout
                 </button>
+              </div>
+            ) : (
+              <div className="pt-3 mt-3 border-t border-blue-800/80 px-2">
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Login Admin</span>
+                </Link>
               </div>
             )}
           </div>

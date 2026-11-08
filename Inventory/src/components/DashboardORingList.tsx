@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
+import ContactAdminModal from './ContactAdminModal';
 
 export interface InventoryItem {
   id: string;
@@ -19,15 +19,28 @@ interface DashboardORingListProps {
 }
 
 export default function DashboardORingList({ initialItems }: DashboardORingListProps) {
+  const [role, setRole] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'checked_out'>('all');
   const [sortBy, setSortBy] = useState<'serialNumber' | 'name' | 'rack' | 'quantity'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [visibleCount, setVisibleCount] = useState(15);
+  const [visibleCount, setVisibleCount] = useState(16);
+
+  // Pop-up modal state for "Hubungi Admin"
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedItemForAction, setSelectedItemForAction] = useState<InventoryItem | null>(null);
+
+  useEffect(() => {
+    const cookies = document.cookie.split(';');
+    const roleCookie = cookies.find((c) => c.trim().startsWith('user_role='));
+    if (roleCookie) {
+      setRole(roleCookie.split('=')[1]);
+    }
+  }, []);
 
   // Reset pagination limit when search or status filter changes
   useEffect(() => {
-    setVisibleCount(15);
+    setVisibleCount(16);
   }, [searchQuery, statusFilter]);
 
   // Filter items
@@ -69,7 +82,7 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
     return list;
   }, [initialItems, searchQuery, statusFilter, sortBy, sortOrder]);
 
-  // Sliced items according to visibleCount (default 15)
+  // Sliced items according to visibleCount
   const visibleItems = useMemo(() => {
     return filteredItems.slice(0, visibleCount);
   }, [filteredItems, visibleCount]);
@@ -89,14 +102,30 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
     }
   };
 
+  const handleTakeItem = (item: InventoryItem) => {
+    if (role === 'admin') {
+      // Admin langsung diarahkan ke form scan/checkout
+      window.location.href = `/scan/module-room?serial=${item.serialNumber}&action=checkout`;
+    } else {
+      // User / Viewer menampilkan pop-up "Hubungi Admin"
+      setSelectedItemForAction(item);
+      setModalOpen(true);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
       {/* Header Section */}
-      <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-blue-50/60 to-white">
+      <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-blue-950">Daftar Inventaris O-Ring</h2>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-blue-600 text-white shadow-sm">
+                Daftar Inventaris
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-blue-950 tracking-tight">
+                Daftar Inventaris Barang
+              </h2>
               <span className="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-full">
                 {totalItemsCount} Varian
               </span>
@@ -104,19 +133,12 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                 Total {totalPcs} Pcs
               </span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Data stok barang O-Ring, sisa pcs, posisi rak, dan status ketersediaan.
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+              Daftar stok dan ketersediaan barang inventaris.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/location/module-room"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
-            >
-              <span>Buka Lemari Module Room</span>
-            </Link>
-          </div>
+
         </div>
 
         {/* Search & Filter Controls */}
@@ -127,8 +149,8 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari Serial Number, Nama O-Ring, atau Rak (Contoh: Rak - A1)..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              placeholder="Cari Plat Number, Nama O-Ring, atau Rak..."
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
             />
             <svg
               className="w-4 h-4 text-slate-400 absolute left-3 top-3"
@@ -149,10 +171,10 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg self-start md:self-auto text-xs font-semibold text-slate-600">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start md:self-auto text-xs font-semibold text-slate-600">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
+              className={`px-3 py-1.5 rounded-lg transition-all ${
                 statusFilter === 'all' ? 'bg-white text-blue-900 shadow-sm font-bold' : 'hover:text-slate-900'
               }`}
             >
@@ -160,25 +182,29 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
             </button>
             <button
               onClick={() => setStatusFilter('available')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
+              className={`px-3 py-1.5 rounded-lg transition-all ${
                 statusFilter === 'available' ? 'bg-white text-green-700 shadow-sm font-bold' : 'hover:text-slate-900'
               }`}
             >
-              Available ({availableCount})
+              Tersedia ({availableCount})
             </button>
             <button
               onClick={() => setStatusFilter('checked_out')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
+              className={`px-3 py-1.5 rounded-lg transition-all ${
                 statusFilter === 'checked_out' ? 'bg-white text-rose-700 shadow-sm font-bold' : 'hover:text-slate-900'
               }`}
             >
-              None ({checkedOutCount})
+              Habis ({checkedOutCount})
             </button>
           </div>
         </div>
       </div>
 
-      {/* Table Section (Desktop View) */}
+      {/* ======================================================== */}
+      {/* DAFTAR BARISAN KE BAWAH (DESKTOP TABLE + MOBILE ROWS)    */}
+      {/* ======================================================== */}
+
+      {/* Desktop & Tablet Table View */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -188,7 +214,7 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                 className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Serial Number</span>
+                  <span>Plat Number</span>
                   {sortBy === 'serialNumber' && (
                     <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   )}
@@ -210,7 +236,7 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                 className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Rak</span>
+                  <span>Rak / Lokasi</span>
                   {sortBy === 'rack' && (
                     <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                   )}
@@ -228,32 +254,43 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                 </div>
               </th>
               <th className="px-6 py-3.5 text-center">Status</th>
+              <th className="px-6 py-3.5 text-right">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {visibleItems.map((item) => {
               const qty = item.quantity ?? 1;
-              const isAvailable = item.status === 'available';
+              const isAvailable = item.status === 'available' && qty > 0;
 
               return (
                 <tr key={item.id || item.serialNumber} className="hover:bg-blue-50/40 transition-colors">
                   <td className="px-6 py-4">
-                    <span className="font-mono font-bold text-blue-900 tracking-wide text-sm">
+                    <span className="font-mono font-bold text-blue-900 tracking-wide text-sm bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
                       {item.serialNumber}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-medium text-slate-800">{item.name}</span>
+                    <div>
+                      <span className="font-semibold text-slate-900 block">{item.name}</span>
+                      {item.category && (
+                        <span className="text-[11px] text-slate-400 font-medium">{item.category}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                      {item.rack}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        {item.rack}
+                      </span>
+                      {item.location && (
+                        <span className="text-xs text-slate-400">({item.location})</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-mono font-bold ${
-                        isAvailable && qty > 0
+                        isAvailable
                           ? 'bg-blue-50 text-blue-800 border border-blue-200'
                           : 'bg-rose-50 text-rose-800 border border-rose-200'
                       }`}
@@ -269,8 +306,23 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                           : 'bg-rose-100 text-rose-800'
                       }`}
                     >
-                      {isAvailable ? 'Available' : 'None'}
+                      {isAvailable ? 'Tersedia' : 'Habis'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {isAvailable ? (
+                      <button
+                        onClick={() => handleTakeItem(item)}
+                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 active:scale-95"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        <span>Ambil Barang</span>
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-400 font-medium px-3 py-1 bg-slate-100 rounded-md">Habis</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -279,37 +331,61 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
         </table>
       </div>
 
-      {/* Cards Section (Mobile View) */}
+      {/* Mobile Stacked Row List View */}
       <div className="md:hidden divide-y divide-slate-100">
         {visibleItems.map((item) => {
           const qty = item.quantity ?? 1;
-          const isAvailable = item.status === 'available';
+          const isAvailable = item.status === 'available' && qty > 0;
 
           return (
-            <div key={item.id || item.serialNumber} className="p-4 space-y-2 hover:bg-slate-50 transition-colors">
-              <div className="flex items-start justify-between">
+            <div key={item.id || item.serialNumber} className="p-4 space-y-3 hover:bg-slate-50 transition-colors">
+              <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="font-mono font-bold text-blue-900 text-sm">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200">
                     {item.serialNumber}
-                  </div>
-                  <div className="text-sm font-medium text-slate-800">{item.name}</div>
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-sm mt-1">{item.name}</h3>
+                  {item.category && (
+                    <span className="text-[10px] text-slate-400">{item.category}</span>
+                  )}
                 </div>
                 <span
-                  className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                     isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                   }`}
                 >
-                  {isAvailable ? 'Available' : 'None'}
+                  {isAvailable ? 'Tersedia' : 'Habis'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium border border-slate-200">
-                  {item.rack}
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                  {item.rack} {item.location ? `• ${item.location}` : ''}
                 </span>
-                <span className="font-mono font-bold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200">
-                  {qty} pcs
+                <span className="font-mono font-bold text-slate-800 text-sm">
+                  {qty} <span className="text-xs font-normal text-slate-500">pcs</span>
                 </span>
+              </div>
+
+              <div>
+                {isAvailable ? (
+                  <button
+                    onClick={() => handleTakeItem(item)}
+                    className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>Ambil Barang</span>
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-slate-100 text-slate-400 text-xs font-bold rounded-lg cursor-not-allowed text-center"
+                  >
+                    Stok Habis
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -326,18 +402,18 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
           <div className="flex items-center gap-2">
             {visibleCount < filteredItems.length && (
               <button
-                onClick={() => setVisibleCount((prev) => prev + 15)}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+                onClick={() => setVisibleCount((prev) => prev + 16)}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
               >
-                Show More
+                Tampilkan Lebih Banyak ({filteredItems.length - visibleCount} lagi)
               </button>
             )}
-            {visibleCount > 15 && (
+            {visibleCount > 16 && (
               <button
-                onClick={() => setVisibleCount(15)}
-                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-all"
+                onClick={() => setVisibleCount(16)}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-300 transition-all"
               >
-                Tampilkan 15 Awal
+                Tampilkan 16 Awal
               </button>
             )}
           </div>
@@ -358,6 +434,13 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
           )}
         </div>
       )}
+
+      {/* POP-UP MODAL "HUBUNGI ADMIN" */}
+      <ContactAdminModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        item={selectedItemForAction}
+      />
     </div>
   );
 }

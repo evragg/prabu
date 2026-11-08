@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getItemBySerial, updateItemStatus, deleteItem } from '@/lib/db';
+import { getItemBySerial, updateItem, deleteItem } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -19,11 +19,18 @@ export async function PATCH(
 ) {
   const { serial } = await params;
   const body = await request.json();
-  const item = await updateItemStatus(serial, body.status);
+  const item = await updateItem(serial, body);
   if (!item) {
-    return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Item not found or failed to update' }, { status: 404 });
   }
   return NextResponse.json(item);
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ serial: string }> }
+) {
+  return PATCH(request, { params });
 }
 
 export async function DELETE(
