@@ -23,7 +23,12 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        router.push('/');
+        const data = await res.json();
+        if (data.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
         router.refresh();
       } else {
         const data = await res.json();
@@ -37,11 +42,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center">
+      <div className="mb-4">
+        <a href="/" className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1.5">
+          <span>&larr;</span>
+          <span>Kembali ke Katalog (Lihat Barang Tanpa Login)</span>
+        </a>
+      </div>
       <div className="bg-white p-8 rounded-xl shadow-md border border-blue-100 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-blue-900">Inventory Login</h1>
-          <p className="text-gray-500 mt-2">Silakan login untuk melanjutkan</p>
+          <div className="inline-flex items-center justify-center p-2 bg-slate-50 border border-slate-200 rounded-xl mb-3 shadow-sm">
+            <img src="/slb-logo.png" alt="SLB Logo" className="h-8 w-auto object-contain" />
+          </div>
+          <h1 className="text-2xl font-bold text-blue-900">Login Admin</h1>
+          <p className="text-gray-500 mt-1 text-sm">SLB Inventory System</p>
         </div>
 
         {error && (

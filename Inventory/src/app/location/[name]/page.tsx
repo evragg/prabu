@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getItemsByLocation } from '@/lib/db';
-import QRCodeDisplay from '@/components/QRCodeDisplay';
 import CabinetRackView from '@/components/CabinetRackView';
 
 export const dynamic = 'force-dynamic';
@@ -38,64 +37,37 @@ export default async function LocationPage({ params }: { params: Promise<{ name:
             )}
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {role === 'viewer' 
-              ? 'Klik laci pada lemari rak visual di bawah untuk mengecek isi dan status barang.'
-              : 'Klik laci pada lemari rak visual di bawah untuk mengecek isi barang atau ambil/kembalikan.'}
+            Klik laci pada lemari rak visual di bawah untuk mengecek isi barang atau ambil/kembalikan.
           </p>
         </div>
 
-        {role !== 'viewer' && (
+        {role === 'admin' ? (
           <Link
             href={`/scan/${locationSlug}`}
             className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all self-start sm:self-auto flex items-center gap-2"
           >
             <span>Buka Form Keluar/Masuk</span>
           </Link>
+        ) : (
+          <a
+            href="https://wa.me/6287823175874?text=Halo%20Admin,%20saya%20ingin%20mengambil%20barang%20di%20inventory"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2 self-start sm:self-auto shadow-sm transition-colors"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Hubungi Admin WhatsApp (+62 878-2317-5874)</span>
+          </a>
         )}
       </div>
 
-      {/* Main Grid: Visual Cabinet on Left, QR Code on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Visual Cabinet Section (Span 3 cols) */}
-        <div className="lg:col-span-3">
-          <CabinetRackView
-            locationName={locationName}
-            locationSlug={locationSlug}
-            items={items}
-          />
-        </div>
-
-        {/* QR Code and Quick Tools (1 col) */}
-        <div className="space-y-6">
-          <QRCodeDisplay location={locationName} />
-
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/80 p-5 rounded-xl space-y-3">
-            <h4 className="font-bold text-blue-900 text-sm flex items-center gap-2">
-              <span>Petunjuk Rak Visual</span>
-            </h4>
-            <ul className="text-xs text-slate-600 space-y-2 leading-relaxed">
-              <li className="flex items-start gap-1.5">
-                <span className="font-bold text-blue-600">1.</span>
-                <span>
-                  <strong>Klik slot laci</strong> (misal A1, B2) untuk membuka popup detail barang.
-                </span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="font-bold text-blue-600">2.</span>
-                <span>
-                  Gunakan <strong>Pencarian</strong> untuk menemukan slot lemari tempat barang berada.
-                </span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="font-bold text-blue-600">3.</span>
-                <span>
-                  Dot <span className="text-emerald-600 font-bold">Hijau</span> = Tersedia, Dot{' '}
-                  <span className="text-rose-600 font-bold">Merah</span> = Sedang Dipinjam.
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
+      {/* Visual Cabinet Section */}
+      <div>
+        <CabinetRackView
+          locationName={locationName}
+          locationSlug={locationSlug}
+          items={items}
+        />
       </div>
     </div>
   );

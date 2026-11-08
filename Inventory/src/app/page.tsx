@@ -8,9 +8,9 @@ export default async function HomePage() {
   const stats = await getStats();
   const categories = await getCategories();
   const locations = await getLocations();
-  const oringItems = await getItems('O-Ring');
+  const allItems = await getItems();
 
-  const serializedORingItems = oringItems.map((item) => ({
+  const serializedItems = allItems.map((item) => ({
     id: item.id,
     serialNumber: item.serialNumber,
     name: item.name,
@@ -45,8 +45,8 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Daftar Inventaris O-Ring (Pilihan O-Ring yang rapi di Dashboard) */}
-      <DashboardORingList initialItems={serializedORingItems} />
+      {/* Daftar Inventaris (Pilihan yang rapi di Dashboard) */}
+      <DashboardORingList initialItems={serializedItems} />
 
       {/* Shortcut Lokasi & Lemari Rak */}
       <div>

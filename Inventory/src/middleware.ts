@@ -7,37 +7,50 @@ export function middleware(request: NextRequest) {
 
   // Izinkan akses ke /login dan /api/auth
   if (path === '/login' || path.startsWith('/api/auth')) {
-    if (role && path === '/login') {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (role === 'admin' && path === '/login') {
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
     return NextResponse.next();
   }
 
-  // Jika tidak ada role, redirect ke login (atau return 401 jika request API)
+  // Publik / Pengunjung tanpa login:
+  // - Boleh melihat (GET) dashboard, lokasi, kategori, log, dsb.
+  // - Jika mencoba akses rute khusus admin (/admin atau /scan) -> arahkan ke /login
+  // - Jika mencoba memodifikasi data via API tanpa login -> tolak 401
   if (!role) {
+    if (path.startsWith('/admin') || path.startsWith('/scan')) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
     if (path.startsWith('/api/')) {
-      // Izinkan GET untuk API publik atau kembalikan 401
-      if (request.method === 'GET') {
+      if (request.method === 'GET' || request.method === 'HEAD') {
         return NextResponse.next();
       }
-      return NextResponse.json({ error: 'Unauthorized: Silakan login terlebih dahulu' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Silakan login sebagai Admin terlebih dahulu' }, { status: 401 });
     }
-    return NextResponse.redirect(new URL('/login', request.url));
+
+    // Izinkan akses publik untuk semua halaman lainnya (Dashboard, Location, Category, Logs)
+    return NextResponse.next();
   }
 
-  // Proteksi rute berdasarkan role
-  // Viewer tidak boleh akses /admin dan /scan (tidak bisa CRUD)
+  // Jika login sebagai viewer:
+  // - Tidak boleh akses /admin dan /scan
+  // - Tidak boleh memodifikasi data
   if (role === 'viewer') {
     if (path.startsWith('/admin') || path.startsWith('/scan')) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-    
-    // Viewer juga tidak boleh hit API mutasi (POST/DELETE/PATCH)
-    if (path.startsWith('/api/') && request.method !== 'GET' && request.method !== 'HEAD' && !path.startsWith('/api/auth')) {
-      return NextResponse.json({ error: 'Unauthorized: Viewer read-only' }, { status: 403 });
+
+    if (path.startsWith('/api/items') && request.method !== 'GET' && request.method !== 'HEAD') {
+      return NextResponse.json({ error: 'Unauthorized: Hanya admin yang dapat mengubah master data barang' }, { status: 403 });
+    }
+
+    if (path.startsWith('/api/logs') && request.method === 'POST') {
+      return NextResponse.json({ error: 'Unauthorized: Hubungi Admin untuk mengambil atau mengembalikan barang' }, { status: 403 });
     }
   }
 
+  // Admin memiliki akses penuh ke seluruh halaman & API
   return NextResponse.next();
 }
 
