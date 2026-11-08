@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const role = request.cookies.get('user_role')?.value;
   const path = request.nextUrl.pathname;
 
-  // Izinkan akses ke /login dan /api/auth
+  // Izinkan akses ke /login, /api/auth, dan static assets
   if (path === '/login' || path.startsWith('/api/auth')) {
     if (role === 'admin' && path === '/login') {
       return NextResponse.redirect(new URL('/admin', request.url));
@@ -13,24 +13,25 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Publik / Pengunjung tanpa login:
-  // - Boleh melihat (GET) dashboard, lokasi, kategori, log, dsb.
-  // - Jika mencoba akses rute khusus admin (/admin atau /scan) -> arahkan ke /login
-  // - Jika mencoba memodifikasi data via API tanpa login -> tolak 401
+  // Izinkan akses ke file statis (gambar, dll)
+  if (path.match(/\.(png|jpg|jpeg|gif|svg|ico|webp|css|js)$/)) {
+    return NextResponse.next();
+  }
+
+  // Jika belum login (tidak ada cookie role), redirect ke /login
   if (!role) {
-    if (path.startsWith('/admin') || path.startsWith('/scan')) {
-      return NextResponse.redirect(new URL('/login', request.url));
+    // Izinkan API GET requests untuk SSR data fetching
+    if (path.startsWith('/api/') && (request.method === 'GET' || request.method === 'HEAD')) {
+      return NextResponse.next();
     }
 
+    // Tolak API non-GET tanpa login
     if (path.startsWith('/api/')) {
-      if (request.method === 'GET' || request.method === 'HEAD') {
-        return NextResponse.next();
-      }
       return NextResponse.json({ error: 'Unauthorized: Silakan login sebagai Admin terlebih dahulu' }, { status: 401 });
     }
 
-    // Izinkan akses publik untuk semua halaman lainnya (Dashboard, Location, Category, Logs)
-    return NextResponse.next();
+    // Redirect semua halaman ke /login
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Jika login sebagai viewer:
