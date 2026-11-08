@@ -42,6 +42,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ name:
             location={item.location}
             rack={item.rack}
             status={item.status}
+            quantity={item.quantity}
           />
         ))}
       </div>

@@ -35,7 +35,6 @@ export default function Navbar() {
 
   const links = [
     { href: '/', label: 'Dashboard', show: true },
-    { href: '/category/o-ring', label: 'O-Ring', show: true },
     { href: '/location/module-room', label: 'Module Room', show: true },
     { href: '/logs', label: 'Log Activity', show: true },
     { href: '/admin', label: 'Admin (Kelola Barang)', show: role === 'admin' },

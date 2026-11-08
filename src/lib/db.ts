@@ -10,6 +10,7 @@ export interface Item {
   location: string;
   rack: string;
   status: string;
+  quantity: number;
 }
 
 export interface LogEntry {
@@ -21,6 +22,7 @@ export interface LogEntry {
   person: string;
   location: string;
   timestamp: string | Date;
+  quantity?: number;
 }
 
 // Fallback Memory/JSON Store
@@ -37,16 +39,16 @@ function getFallbackData(): { items: Item[]; logs: LogEntry[] } {
   }
   return {
     items: [
-      { id: '1', category: 'O-Ring', serialNumber: 'BO11870', name: 'O-Ring 50mm NBR', location: 'Module Room', rack: 'Rak - A1', status: 'available' },
-      { id: '2', category: 'O-Ring', serialNumber: 'BO11871', name: 'O-Ring 70mm Viton', location: 'Module Room', rack: 'Rak - B2', status: 'available' },
-      { id: '3', category: 'O-Ring', serialNumber: 'BO11872', name: 'O-Ring 30mm Silicone', location: 'Module Room', rack: 'Rak - C1', status: 'checked_out' },
-      { id: '4', category: 'O-Ring', serialNumber: 'BO11873', name: 'O-Ring 100mm EPDM', location: 'Module Room', rack: 'Rak - D2', status: 'available' },
-      { id: '5', category: 'O-Ring', serialNumber: 'BO11874', name: 'O-Ring 45mm NBR', location: 'Module Room', rack: 'Rak - B4', status: 'available' },
-      { id: '6', category: 'O-Ring', serialNumber: 'BO11875', name: 'O-Ring 60mm Viton', location: 'Module Room', rack: 'Rak - C3', status: 'checked_out' },
-      { id: '7', category: 'O-Ring', serialNumber: 'BO11876', name: 'O-Ring 25mm PTFE', location: 'Module Room', rack: 'Rak - E4', status: 'available' },
-      { id: '8', category: 'O-Ring', serialNumber: 'BO11877', name: 'O-Ring 80mm NBR', location: 'Module Room', rack: 'Rak - B2', status: 'available' },
-      { id: '9', category: 'MRTM-2245', serialNumber: '2245', name: 'MRTM', location: 'Module Room', rack: 'Rak - D4', status: 'checked_out' },
-      { id: '10', category: 'O-Ring', serialNumber: 'BO11880', name: 'O-Ring 40mm FKM', location: 'Module Room', rack: 'Rak - A2', status: 'available' }
+      { id: '1', category: 'O-Ring', serialNumber: 'BO11870', name: 'O-Ring 50mm NBR', location: 'Module Room', rack: 'Rak - A1', status: 'available', quantity: 25 },
+      { id: '2', category: 'O-Ring', serialNumber: 'BO11871', name: 'O-Ring 70mm Viton', location: 'Module Room', rack: 'Rak - B2', status: 'available', quantity: 15 },
+      { id: '3', category: 'O-Ring', serialNumber: 'BO11872', name: 'O-Ring 30mm Silicone', location: 'Module Room', rack: 'Rak - C1', status: 'available', quantity: 10 },
+      { id: '4', category: 'O-Ring', serialNumber: 'BO11873', name: 'O-Ring 100mm EPDM', location: 'Module Room', rack: 'Rak - D2', status: 'available', quantity: 20 },
+      { id: '5', category: 'O-Ring', serialNumber: 'BO11874', name: 'O-Ring 45mm NBR', location: 'Module Room', rack: 'Rak - B4', status: 'available', quantity: 30 },
+      { id: '6', category: 'O-Ring', serialNumber: 'BO11875', name: 'O-Ring 60mm Viton', location: 'Module Room', rack: 'Rak - C3', status: 'available', quantity: 8 },
+      { id: '7', category: 'O-Ring', serialNumber: 'BO11876', name: 'O-Ring 25mm PTFE', location: 'Module Room', rack: 'Rak - E4', status: 'available', quantity: 12 },
+      { id: '8', category: 'O-Ring', serialNumber: 'BO11877', name: 'O-Ring 80mm NBR', location: 'Module Room', rack: 'Rak - B2', status: 'available', quantity: 18 },
+      { id: '9', category: 'MRTM-2245', serialNumber: '2245', name: 'MRTM', location: 'Module Room', rack: 'Rak - D4', status: 'checked_out', quantity: 1 },
+      { id: '10', category: 'O-Ring', serialNumber: 'BO11880', name: 'O-Ring 40mm FKM', location: 'Module Room', rack: 'Rak - A2', status: 'available', quantity: 5 }
     ],
     logs: []
   };
@@ -136,12 +138,12 @@ export async function getLocations(): Promise<string[]> {
       distinct: ['location'],
     });
     const dbLocations = items.map((i) => i.location);
-    const defaultLocations = ['Module Room'];
+    const defaultLocations = ['Module Room', 'Lab'];
     return [...new Set([...defaultLocations, ...dbLocations])];
   } catch {
     const data = getFallbackData();
     const locs = data.items.map(i => i.location);
-    return [...new Set(['Module Room', ...locs])];
+    return [...new Set(['Module Room', 'Lab', ...locs])];
   }
 }
 
@@ -155,6 +157,71 @@ export async function getCategories(): Promise<string[]> {
   } catch {
     const data = getFallbackData();
     return [...new Set(data.items.map(i => i.category))];
+  }
+}
+
+export async function updateItem(
+  originalSerial: string,
+  data: Partial<Omit<Item, 'id'>>
+): Promise<Item | null> {
+  try {
+    const all = await prisma.item.findMany();
+    const found = all.find(
+      (i) => i.serialNumber.toLowerCase() === originalSerial.toLowerCase()
+    );
+    if (!found) return null;
+
+    const updateData: {
+      serialNumber?: string;
+      name?: string;
+      category?: string;
+      location?: string;
+      rack?: string;
+      quantity?: number;
+      status?: string;
+    } = {};
+
+    if (data.serialNumber !== undefined) updateData.serialNumber = data.serialNumber.trim();
+    if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.category !== undefined) updateData.category = data.category.trim();
+    if (data.location !== undefined) updateData.location = data.location.trim();
+    if (data.rack !== undefined) updateData.rack = data.rack.trim();
+    if (data.quantity !== undefined) {
+      updateData.quantity = Math.max(0, data.quantity);
+      if (data.status === undefined) {
+        updateData.status = updateData.quantity <= 0 ? 'checked_out' : 'available';
+      }
+    }
+    if (data.status !== undefined) updateData.status = data.status;
+
+    const updated = await prisma.item.update({
+      where: { id: found.id },
+      data: updateData,
+    });
+    return updated;
+  } catch (err) {
+    console.warn('DB update failed, using fallback:', err);
+    const fallback = getFallbackData();
+    const item = fallback.items.find(
+      (i) => i.serialNumber.toLowerCase() === originalSerial.toLowerCase()
+    );
+    if (item) {
+      if (data.serialNumber !== undefined) item.serialNumber = data.serialNumber.trim();
+      if (data.name !== undefined) item.name = data.name.trim();
+      if (data.category !== undefined) item.category = data.category.trim();
+      if (data.location !== undefined) item.location = data.location.trim();
+      if (data.rack !== undefined) item.rack = data.rack.trim();
+      if (data.quantity !== undefined) {
+        item.quantity = Math.max(0, data.quantity);
+        if (data.status === undefined) {
+          item.status = item.quantity <= 0 ? 'checked_out' : 'available';
+        }
+      }
+      if (data.status !== undefined) item.status = data.status;
+      saveFallbackData(fallback);
+      return item;
+    }
+    return null;
   }
 }
 
@@ -196,6 +263,7 @@ export async function addLog(entry: Omit<LogEntry, 'id'>): Promise<LogEntry> {
         action: entry.action,
         person: entry.person,
         location: entry.location,
+        quantity: entry.quantity || 1,
         timestamp: entry.timestamp ? new Date(entry.timestamp) : new Date(),
       },
     });
@@ -204,12 +272,29 @@ export async function addLog(entry: Omit<LogEntry, 'id'>): Promise<LogEntry> {
     const data = getFallbackData();
     const newLog: LogEntry = {
       ...entry,
-      id: `log-${Date.now()}`,
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      quantity: entry.quantity || 1,
       timestamp: new Date().toISOString()
     };
     data.logs.unshift(newLog);
     saveFallbackData(data);
     return newLog;
+  }
+}
+
+export async function clearLogs(): Promise<boolean> {
+  try {
+    await prisma.logEntry.deleteMany();
+    const data = getFallbackData();
+    data.logs = [];
+    saveFallbackData(data);
+    return true;
+  } catch (err) {
+    console.warn('DB clear logs failed, clearing fallback:', err);
+    const data = getFallbackData();
+    data.logs = [];
+    saveFallbackData(data);
+    return true;
   }
 }
 
@@ -227,13 +312,10 @@ export async function getLogs(): Promise<LogEntry[]> {
 
 export async function getStats() {
   try {
-    const total = await prisma.item.count();
-    const available = await prisma.item.count({
-      where: { status: 'available' },
-    });
-    const checkedOut = await prisma.item.count({
-      where: { status: 'checked_out' },
-    });
+    const items = await prisma.item.findMany();
+    const totalQty = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
+    const availableQty = items.filter(i => i.status === 'available').reduce((sum, i) => sum + (i.quantity || 0), 0);
+    const checkedOutQty = totalQty - availableQty;
     const locations = (
       await prisma.item.findMany({
         select: { location: true },
@@ -248,18 +330,20 @@ export async function getStats() {
     ).length;
 
     return {
-      total,
-      available,
-      checkedOut,
+      total: totalQty,
+      available: availableQty,
+      checkedOut: checkedOutQty,
       locations,
       categories,
     };
   } catch {
     const data = getFallbackData();
+    const totalQty = data.items.reduce((sum, i) => sum + (i.quantity || 0), 0);
+    const availableQty = data.items.filter(i => i.status === 'available').reduce((sum, i) => sum + (i.quantity || 0), 0);
     return {
-      total: data.items.length,
-      available: data.items.filter(i => i.status === 'available').length,
-      checkedOut: data.items.filter(i => i.status === 'checked_out').length,
+      total: totalQty,
+      available: availableQty,
+      checkedOut: totalQty - availableQty,
       locations: [...new Set(data.items.map(i => i.location))].length || 1,
       categories: [...new Set(data.items.map(i => i.category))].length || 1,
     };
@@ -276,6 +360,7 @@ export async function addItem(itemData: Omit<Item, 'id'>): Promise<Item> {
         location: itemData.location,
         rack: itemData.rack,
         status: itemData.status,
+        quantity: itemData.quantity || 1,
       },
     });
     return newItem;
@@ -283,7 +368,8 @@ export async function addItem(itemData: Omit<Item, 'id'>): Promise<Item> {
     const data = getFallbackData();
     const newItem: Item = {
       ...itemData,
-      id: `item-${Date.now()}`
+      id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      quantity: itemData.quantity || 1
     };
     data.items.push(newItem);
     saveFallbackData(data);
@@ -312,5 +398,39 @@ export async function deleteItem(serialNumber: string): Promise<boolean> {
       return true;
     }
     return false;
+  }
+}
+
+// Update item quantity by delta (negative = subtract, positive = add)
+// Also updates status: quantity 0 → checked_out, quantity > 0 → available
+export async function updateItemQuantity(
+  serialNumber: string,
+  delta: number
+): Promise<Item | null> {
+  try {
+    const all = await prisma.item.findMany();
+    const found = all.find(
+      (i) => i.serialNumber.toLowerCase() === serialNumber.toLowerCase()
+    );
+    if (!found) return null;
+
+    const newQty = Math.max(0, (found.quantity || 0) + delta);
+    const newStatus = newQty <= 0 ? 'checked_out' : 'available';
+
+    const updated = await prisma.item.update({
+      where: { id: found.id },
+      data: { quantity: newQty, status: newStatus },
+    });
+    return updated;
+  } catch {
+    const data = getFallbackData();
+    const item = data.items.find(i => i.serialNumber.toLowerCase() === serialNumber.toLowerCase());
+    if (item) {
+      item.quantity = Math.max(0, (item.quantity || 0) + delta);
+      item.status = item.quantity <= 0 ? 'checked_out' : 'available';
+      saveFallbackData(data);
+      return item;
+    }
+    return null;
   }
 }
