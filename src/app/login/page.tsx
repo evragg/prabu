@@ -66,7 +66,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold tracking-tight">SLB</h2>
-              <p className="text-blue-200 text-xs tracking-widest uppercase">Inventory System</p>
+              <p className="text-blue-100 text-xs tracking-widest uppercase">TLM Inventory System</p>
             </div>
           </div>
 
@@ -74,7 +74,7 @@ export default function LoginPage() {
           <h1 className="text-3xl lg:text-4xl font-bold leading-tight mb-6">
             Sistem Inventaris
             <br />
-            <span className="text-blue-300">Digital Terpadu</span>
+            <span className="text-blue-100">Digital Terpadu</span>
           </h1>
 
           <p className="text-blue-100 text-base leading-relaxed mb-10">
@@ -85,38 +85,38 @@ export default function LoginPage() {
           <div className="space-y-5">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20">
-                <svg className="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
               <div>
                 <h3 className="font-semibold text-sm">Manajemen Stok</h3>
-                <p className="text-blue-200 text-sm mt-0.5">Kelola O-Ring, peralatan Lab, dan Module Room dalam satu sistem terpusat.</p>
+                <p className="text-blue-100 text-sm mt-0.5">Kelola O-Ring, peralatan Lab, dan Module Room dalam satu sistem terpusat.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20">
-                <svg className="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
                 <h3 className="font-semibold text-sm">Pelacakan Lokasi</h3>
-                <p className="text-blue-200 text-sm mt-0.5">Visualisasi lemari dan rak dengan status ketersediaan real-time.</p>
+                <p className="text-blue-100 text-sm mt-0.5">Visualisasi lemari dan rak dengan status ketersediaan real-time.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20">
-                <svg className="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
                 <h3 className="font-semibold text-sm">Riwayat Aktivitas</h3>
-                <p className="text-blue-200 text-sm mt-0.5">Catat setiap pengambilan dan pengembalian barang secara otomatis.</p>
+                <p className="text-blue-100 text-sm mt-0.5">Catat setiap pengambilan dan pengembalian barang secara otomatis.</p>
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center p-2.5 bg-white border border-slate-200 rounded-xl mb-4 shadow-sm">
               <img src="/slb-logo.png" alt="SLB Logo" className="h-9 w-auto object-contain" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Login Admin</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Login</h1>
             <p className="text-slate-500 mt-1.5 text-sm">Masuk untuk mengelola inventaris</p>
           </div>
 
