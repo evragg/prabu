@@ -21,6 +21,7 @@ interface CabinetRackViewProps {
   locationName: string;
   locationSlug: string;
   items: InventoryItem[];
+  userRole?: string | null;
 }
 
 // 4 Columns x 8 Rows = 32 Laci (Module Room)
@@ -89,10 +90,11 @@ export default function CabinetRackView({
   locationName,
   locationSlug,
   items: initialItems,
+  userRole,
 }: CabinetRackViewProps) {
   const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>(initialItems);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(userRole || null);
 
   const isLab = locationSlug.toLowerCase() === 'lab' || locationName.toLowerCase() === 'lab';
   const [doorsOpenMap, setDoorsOpenMap] = useState<Record<number, boolean>>({
@@ -120,9 +122,13 @@ export default function CabinetRackView({
     const cookies = document.cookie.split(';');
     const roleCookie = cookies.find((c) => c.trim().startsWith('user_role='));
     if (roleCookie) {
-      setRole(roleCookie.split('=')[1]);
+      setRole(roleCookie.split('=')[1]?.trim());
+    } else if (!userRole) {
+      setRole('viewer');
     }
-  }, []);
+  }, [userRole]);
+
+  const isAdmin = role === 'admin';
 
   const [selectedSlot, setSelectedSlot] = useState<{
     cabinetName: string;
@@ -624,17 +630,19 @@ export default function CabinetRackView({
                                           {hasItems ? (isAvailable ? 'Tersedia' : 'Habis') : 'Kosong'}
                                         </span>
 
-                                        {/* BUTTON TAMBAH BARANG DI SETIAP TINGKAT */}
-                                        <button
-                                          onClick={() => handleOpenAddModal(shelfKey)}
-                                          className="px-2 py-1 bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 text-xs font-semibold rounded border border-blue-200 transition-colors flex items-center gap-1"
-                                          title={`Tambah barang ke ${shelf.name}`}
-                                        >
-                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                          </svg>
-                                          <span>Tambah</span>
-                                        </button>
+                                        {/* BUTTON TAMBAH BARANG DI SETIAP TINGKAT (HANYA ADMIN) */}
+                                        {isAdmin && (
+                                          <button
+                                            onClick={() => handleOpenAddModal(shelfKey)}
+                                            className="px-2 py-1 bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 text-xs font-semibold rounded border border-blue-200 transition-colors flex items-center gap-1"
+                                            title={`Tambah barang ke ${shelf.name}`}
+                                          >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            <span>Tambah</span>
+                                          </button>
+                                        )}
 
                                         {/* Buka Tingkat Button */}
                                         <button
@@ -695,15 +703,17 @@ export default function CabinetRackView({
                                       ) : (
                                         <div className="flex items-center justify-between py-2 px-2 text-slate-400 text-xs">
                                           <span>Kosong (belum ada barang)</span>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleOpenAddModal(shelfKey);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800 font-medium text-[11px]"
-                                          >
-                                            + Isi sekarang
-                                          </button>
+                                          {isAdmin && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenAddModal(shelfKey);
+                                              }}
+                                              className="text-blue-600 hover:text-blue-800 font-medium text-[11px]"
+                                            >
+                                              + Isi sekarang
+                                            </button>
+                                          )}
                                         </div>
                                       )}
                                     </div>
@@ -836,7 +846,7 @@ export default function CabinetRackView({
 
                     {isCheckedOut && isORing ? (
                       <span className="text-amber-600 font-medium">Habis Pakai</span>
-                    ) : (
+                    ) : isAdmin ? (
                       <Link
                         href={`/scan/${locationSlug}?serial=${item.serialNumber}&action=${
                           item.status === 'available' ? 'checkout' : 'return'
@@ -845,6 +855,16 @@ export default function CabinetRackView({
                       >
                         {item.status === 'available' ? 'Ambil' : 'Kembalikan'} →
                       </Link>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setContactAdminItem(item);
+                          setShowContactAdmin(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {item.status === 'available' ? 'Ambil' : 'Kembalikan'} →
+                      </button>
                     )}
                   </div>
                 </div>
@@ -975,26 +995,30 @@ export default function CabinetRackView({
                 <span className="text-xs font-semibold text-slate-700">
                   Daftar Barang ({selectedSlotItems.length})
                 </span>
-                <button
-                  onClick={() => handleOpenAddModal(selectedSlot.fullRackKey)}
-                  className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded border border-blue-200 transition-colors flex items-center gap-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Tambah Barang ke Sini</span>
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleOpenAddModal(selectedSlot.fullRackKey)}
+                    className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded border border-blue-200 transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Tambah Barang ke Sini</span>
+                  </button>
+                )}
               </div>
 
               {selectedSlotItems.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 border border-dashed border-slate-200 rounded-lg">
                   <p className="text-xs font-medium">Slot ini saat ini masih kosong</p>
-                  <button
-                    onClick={() => handleOpenAddModal(selectedSlot.fullRackKey)}
-                    className="mt-2 text-xs text-blue-600 font-semibold hover:underline"
-                  >
-                    + Klik untuk Tambah Barang
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleOpenAddModal(selectedSlot.fullRackKey)}
+                      className="mt-2 text-xs text-blue-600 font-semibold hover:underline"
+                    >
+                      + Klik untuk Tambah Barang
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1115,37 +1139,61 @@ export default function CabinetRackView({
 
                         <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
                           {isAvailable ? (
-                            <Link
-                              href={`/scan/${locationSlug}?serial=${item.serialNumber}&action=checkout`}
-                              className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded font-medium transition-colors"
-                            >
-                              Ambil Barang
-                            </Link>
+                            isAdmin ? (
+                              <Link
+                                href={`/scan/${locationSlug}?serial=${item.serialNumber}&action=checkout`}
+                                className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded font-medium transition-colors"
+                              >
+                                Ambil Barang
+                              </Link>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setContactAdminItem(item);
+                                  setShowContactAdmin(true);
+                                }}
+                                className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded font-medium transition-colors"
+                              >
+                                Ambil Barang
+                              </button>
+                            )
                           ) : isORing ? (
                             <span className="text-slate-400 font-medium">Habis Pakai</span>
-                          ) : (
+                          ) : isAdmin ? (
                             <Link
                               href={`/scan/${locationSlug}?serial=${item.serialNumber}&action=return`}
                               className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded font-medium transition-colors"
                             >
                               Kembalikan
                             </Link>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setContactAdminItem(item);
+                                setShowContactAdmin(true);
+                              }}
+                              className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded font-medium transition-colors"
+                            >
+                              Kembalikan
+                            </button>
                           )}
 
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleStartEdit(item)}
-                              className="px-2 py-1 text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteItem(item.serialNumber)}
-                              className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded"
-                            >
-                              Hapus
-                            </button>
-                          </div>
+                          {isAdmin && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleStartEdit(item)}
+                                className="px-2 py-1 text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem(item.serialNumber)}
+                                className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1156,12 +1204,18 @@ export default function CabinetRackView({
 
             {/* Modal Footer */}
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <button
-                onClick={() => handleOpenAddModal(selectedSlot.fullRackKey)}
-                className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1"
-              >
-                <span>+ Tambah barang ke {selectedSlot.slotLabel}</span>
-              </button>
+              {isAdmin ? (
+                <button
+                  onClick={() => handleOpenAddModal(selectedSlot.fullRackKey)}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1"
+                >
+                  <span>+ Tambah barang ke {selectedSlot.slotLabel}</span>
+                </button>
+              ) : (
+                <div className="text-xs text-slate-400">
+                  Mode hanya lihat (Viewer)
+                </div>
+              )}
               <button
                 onClick={() => setSelectedSlot(null)}
                 className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-medium transition-colors"
