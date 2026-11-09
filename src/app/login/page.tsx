@@ -54,11 +54,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
-      {/* LEFT SIDE - Penjelasan */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white flex flex-col justify-center px-8 sm:px-12 lg:px-16 py-12 lg:py-0 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50">
+      {/* LEFT SIDE - Penjelasan (Desktop Only) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white flex-col justify-center px-8 sm:px-12 lg:px-16 py-12 relative overflow-hidden">
         {/* Background decoration */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-10">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
           <div className="absolute -top-20 -left-20 w-72 h-72 bg-white rounded-full" />
           <div className="absolute bottom-20 -right-16 w-56 h-56 bg-white rounded-full" />
           <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white rounded-full" />
@@ -130,26 +130,26 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT SIDE - Login Form */}
-      <div className="lg:w-1/2 flex flex-col items-center justify-center px-8 sm:px-12 lg:px-16 py-12 lg:py-0 bg-slate-50">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-4 sm:px-8 lg:px-12 py-8 sm:py-12 bg-slate-50 min-h-screen">
+        <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-2.5 bg-white border border-slate-200 rounded-xl mb-4 shadow-sm">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center p-2.5 bg-white border border-slate-200 rounded-xl mb-3 shadow-sm">
               <img src="/slb-logo.png" alt="SLB Logo" className="h-9 w-auto object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Login</h1>
-            <p className="text-slate-500 mt-1.5 text-sm">Masuk untuk mengelola inventaris</p>
+            <p className="text-slate-500 mt-1 text-sm">Masuk untuk mengelola inventaris</p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="bg-red-50 text-red-800 border border-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
+            <div className="bg-red-50 text-red-800 border border-red-200 px-4 py-2.5 rounded-lg mb-5 text-sm">
               {error}
             </div>
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
               <input
@@ -157,7 +157,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder-slate-400"
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder-slate-400 text-sm"
                 placeholder="Masukkan username"
               />
             </div>
@@ -169,7 +169,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder-slate-400"
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder-slate-400 text-sm"
                 placeholder="Masukkan password"
               />
             </div>
@@ -177,19 +177,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm text-sm"
             >
               {loading ? 'Memproses...' : 'Masuk'}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-8">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-slate-50 text-slate-400">atau</span>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="px-3 bg-white text-slate-400 font-medium tracking-wider">atau</span>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleContinueWithoutLogin}
             disabled={guestLoading}
-            className="w-full py-2.5 bg-white text-slate-700 font-medium rounded-lg border border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full py-2.5 bg-white text-slate-700 font-medium rounded-lg border border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 text-sm"
           >
             <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -207,7 +207,7 @@ export default function LoginPage() {
             {guestLoading ? 'Memproses...' : 'Lanjutkan tanpa login'}
           </button>
 
-          <p className="text-xs text-slate-400 text-center mt-4">
+          <p className="text-xs text-slate-400 text-center mt-3.5">
             Mode hanya lihat — tidak dapat mengubah data inventaris
           </p>
         </div>
