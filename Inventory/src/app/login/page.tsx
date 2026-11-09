@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +26,10 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.role === 'admin') {
-          router.push('/admin');
+          window.location.href = '/admin';
         } else {
-          router.push('/');
+          window.location.href = '/';
         }
-        router.refresh();
       } else {
         const data = await res.json();
         setError(data.error || 'Login gagal');
@@ -41,10 +41,21 @@ export default function LoginPage() {
     }
   };
 
-  const handleContinueWithoutLogin = () => {
-    document.cookie = 'user_role=viewer; path=/; max-age=86400';
-    router.push('/');
-    router.refresh();
+  const handleContinueWithoutLogin = async () => {
+    setGuestLoading(true);
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest: true })
+      });
+    } catch (err) {
+      console.error('Failed to set guest cookie on server:', err);
+    }
+    // Set cookie on client as fallback
+    document.cookie = 'user_role=viewer; path=/; max-age=86400; SameSite=Lax';
+    // Full navigation to ensure middleware picks up the cookie immediately
+    window.location.href = '/';
   };
 
   return (
@@ -189,14 +200,16 @@ export default function LoginPage() {
 
           {/* Continue without login */}
           <button
+            type="button"
             onClick={handleContinueWithoutLogin}
-            className="w-full py-2.5 bg-white text-slate-700 font-medium rounded-lg border border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition-all shadow-sm flex items-center justify-center gap-2"
+            disabled={guestLoading}
+            className="w-full py-2.5 bg-white text-slate-700 font-medium rounded-lg border border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            Lanjutkan tanpa login
+            {guestLoading ? 'Memproses...' : 'Lanjutkan tanpa login'}
           </button>
 
           <p className="text-xs text-slate-400 text-center mt-4">
