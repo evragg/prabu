@@ -42,8 +42,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url));
     }
 
-    if (path.startsWith('/api/items') && request.method === 'DELETE') {
-      return NextResponse.json({ error: 'Unauthorized: Hanya admin yang dapat menghapus barang' }, { status: 403 });
+    if (path.startsWith('/api/items') && request.method !== 'GET' && request.method !== 'HEAD') {
+      return NextResponse.json({ error: 'Unauthorized: Hanya admin yang dapat menambah atau mengubah master data barang' }, { status: 403 });
     }
 
     if (path.startsWith('/api/logs') && request.method === 'POST') {

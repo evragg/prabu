@@ -60,6 +60,7 @@ export default async function LocationPage({ params }: { params: Promise<{ name:
           locationName={locationName}
           locationSlug={locationSlug}
           items={items}
+          userRole={role}
         />
       </div>
     </div>
