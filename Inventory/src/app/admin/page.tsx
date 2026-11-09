@@ -250,40 +250,42 @@ export default function AdminPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plat Number *</label>
-              <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none uppercase font-mono font-bold" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Barang *</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            {editingSerial && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah (Qty / Sisa Pcs) *</label>
-                <input
-                  type="number"
-                  name="quantity"
-                  min={0}
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plat Number</label>
                 <input
                   type="text"
-                  name="category"
-                  value={formData.category}
+                  name="serialNumber"
+                  value={formData.serialNumber}
                   onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg outline-none uppercase font-mono font-bold text-gray-600"
                 />
               </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Barang *</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                placeholder="Masukkan nama barang..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah (Qty / Sisa Pcs) *</label>
+              <input
+                type="number"
+                name="quantity"
+                min={0}
+                value={formData.quantity}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none font-bold"
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
