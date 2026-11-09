@@ -436,17 +436,6 @@ export default function CabinetRackView({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
-          {/* Button Tambah Barang Utama */}
-          <button
-            onClick={() => handleOpenAddModal()}
-            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-none"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Tambah Barang</span>
-          </button>
-
           {/* View Mode Toggle */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-md border border-slate-200 text-xs">
             <button
@@ -529,18 +518,7 @@ export default function CabinetRackView({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleOpenAddModal(`Lemari ${cabinet.id} - Tingkat 1`)}
-                              className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded border border-blue-200 transition-colors flex items-center gap-1"
-                              title={`Tambah barang ke ${cabinet.name}`}
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                              </svg>
-                              <span>Tambah Barang</span>
-                            </button>
-
+                          <div>
                             <button
                               onClick={() =>
                                 setDoorsOpenMap((prev) => ({
@@ -760,15 +738,6 @@ export default function CabinetRackView({
                   <div className="font-bold text-sm text-slate-800">
                     Lemari Rak (4 Kolom x 8 Baris = 32 Laci)
                   </div>
-                  <button
-                    onClick={() => handleOpenAddModal('Rak - A1')}
-                    className="px-2.5 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded border border-blue-200 font-semibold flex items-center gap-1"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>Tambah Barang</span>
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">
