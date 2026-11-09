@@ -513,10 +513,10 @@ export default function CabinetRackView({
                     return (
                       <div
                         key={cabinet.id}
-                        className="bg-white rounded-lg border border-slate-200 overflow-hidden"
+                        className="bg-white rounded-xl border-2 border-slate-400 overflow-hidden shadow-sm"
                       >
                         {/* Header Lemari: Polos, Rapi */}
-                        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                        <div className="px-4 py-3 bg-slate-50 border-b-2 border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                             <div>
@@ -755,7 +755,7 @@ export default function CabinetRackView({
               /* ======================================================== */
               /* MODULE ROOM: 32 LACI POLOS                               */
               /* ======================================================== */
-              <div className="w-full max-w-2xl bg-white rounded-lg border border-slate-200 p-4">
+              <div className="w-full max-w-2xl bg-white rounded-xl border-2 border-slate-400 p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
                   <div className="font-bold text-sm text-slate-800">
                     Lemari Rak (4 Kolom x 8 Baris = 32 Laci)
