@@ -12,43 +12,62 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { serialNumber, name, category, location, rack, status } = body;
+    let { serialNumber, name, category, location, rack, status } = body;
     const quantity = Math.max(1, parseInt(body.quantity) || 1);
 
-    if (!serialNumber || !name || !category || !location || !rack || !status) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: 'Nama barang wajib diisi' }, { status: 400 });
     }
 
-    const { addItem, getItemBySerial, updateItem } = await import('@/lib/db');
+    const trimmedName = name.trim();
+    location = location?.trim() || 'Lab';
+    rack = rack?.trim() || 'Lemari 1 - Tingkat 1';
+    status = status || 'available';
+    category = category?.trim() || 'Umum';
 
-    // Check if serial already exists → if so, add to existing stock and update rack
-    const existing = await getItemBySerial(serialNumber.trim());
+    const { addItem, getItemBySerial, updateItem, getItems } = await import('@/lib/db');
+
+    // If serialNumber is provided, use it; otherwise generate a clean unique serial code
+    if (serialNumber && serialNumber.trim()) {
+      serialNumber = serialNumber.trim();
+    } else {
+      // Auto generate serial based on name + unique identifier
+      const prefix = trimmedName
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toUpperCase()
+        .slice(0, 5) || 'BRG';
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      serialNumber = `${prefix}-${randomSuffix}`;
+    }
+
+    // Check if item with this serial or exact same name in same rack already exists
+    const existing = await getItemBySerial(serialNumber);
     if (existing) {
       const newQty = Math.max(0, (existing.quantity || 0) + quantity);
-      const updated = await updateItem(serialNumber.trim(), {
-        name: name.trim(),
-        category: category.trim(),
-        location: location.trim(),
-        rack: rack.trim(),
+      const updated = await updateItem(existing.serialNumber, {
+        name: trimmedName,
+        category,
+        location,
+        rack,
         quantity: newQty,
         status: newQty > 0 ? 'available' : status,
       });
       if (updated) {
         return NextResponse.json({
           ...updated,
-          message: `Stok ${serialNumber} ditambah ${quantity} pcs (total: ${updated.quantity} pcs) di ${rack.trim()}`
+          message: `Stok ${existing.name} ditambah ${quantity} pcs (total: ${updated.quantity} pcs) di ${rack}`
         }, { status: 200 });
       }
       return NextResponse.json({ error: 'Gagal mengupdate stok' }, { status: 500 });
     }
 
-    // Create new item with quantity as initial stock
+    // Create new item
     const newItem = await addItem({
-      serialNumber: serialNumber.trim(),
-      name: name.trim(),
-      category: category.trim(),
-      location: location.trim(),
-      rack: rack.trim(),
+      serialNumber,
+      name: trimmedName,
+      category,
+      location,
+      rack,
       status,
       quantity,
     });
