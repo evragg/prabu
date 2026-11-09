@@ -41,14 +41,7 @@ export default async function LocationPage({ params }: { params: Promise<{ name:
           </p>
         </div>
 
-        {role === 'admin' ? (
-          <Link
-            href={`/scan/${locationSlug}`}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all self-start sm:self-auto flex items-center gap-2"
-          >
-            <span>Buka Form Keluar/Masuk</span>
-          </Link>
-        ) : (
+        {role !== 'admin' && (
           <a
             href="https://wa.me/6287823175874?text=Halo%20Admin,%20saya%20ingin%20mengambil%20barang%20di%20inventory"
             target="_blank"
