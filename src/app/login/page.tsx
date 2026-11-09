@@ -24,12 +24,7 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        if (data.role === 'admin') {
-          window.location.href = '/admin';
-        } else {
-          window.location.href = '/';
-        }
+        window.location.href = '/';
       } else {
         const data = await res.json();
         setError(data.error || 'Login gagal');

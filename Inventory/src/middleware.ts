@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   // Izinkan akses ke /login, /api/auth, dan static assets
   if (path === '/login' || path.startsWith('/api/auth')) {
     if (role === 'admin' && path === '/login') {
-      return NextResponse.redirect(new URL('/admin', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
     return NextResponse.next();
   }
