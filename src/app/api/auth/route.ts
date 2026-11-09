@@ -8,7 +8,20 @@ const USERS = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const body = await request.json();
+    const { username, password, guest } = body;
+
+    // Handle continue without login (guest / viewer)
+    if (guest) {
+      const response = NextResponse.json({ success: true, role: 'viewer' });
+      response.cookies.set('user_role', 'viewer', {
+        path: '/',
+        maxAge: 60 * 60 * 24, // 1 day
+        httpOnly: false,
+        sameSite: 'lax',
+      });
+      return response;
+    }
 
     const user = USERS[username as keyof typeof USERS];
     
