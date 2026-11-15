@@ -92,9 +92,13 @@ export default function AdminPage() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/items');
+      const res = await fetch('/api/items', { cache: 'no-store' });
       const data = await res.json();
-      setItems(data);
+      if (Array.isArray(data)) {
+        setItems(data);
+      } else {
+        setItems([]);
+      }
     } catch (err) {
       console.error('Failed to fetch items:', err);
     } finally {
@@ -250,19 +254,24 @@ export default function AdminPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {editingSerial && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plat Number</label>
-                <input
-                  type="text"
-                  name="serialNumber"
-                  value={formData.serialNumber}
-                  onChange={handleChange}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg outline-none uppercase font-mono font-bold text-gray-600"
-                />
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Plat Number / Kode Barang {editingSerial ? '(Terkunci)' : '(Bisa langsung isi kode / kosongkan untuk otomatis)'}
+              </label>
+              <input
+                type="text"
+                name="serialNumber"
+                value={formData.serialNumber}
+                onChange={handleChange}
+                readOnly={!!editingSerial}
+                placeholder={editingSerial ? '' : 'Contoh: BO11870 / A-01 (Opsional)'}
+                className={`w-full px-3 py-2 border rounded-lg outline-none uppercase font-mono font-bold ${
+                  editingSerial
+                    ? 'border-gray-200 bg-gray-50 text-gray-600'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-blue-900'
+                }`}
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nama Barang *</label>
               <input

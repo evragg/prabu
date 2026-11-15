@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogs, addLog, getItemBySerial, updateItemQuantity } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   const logs = await getLogs();
-  return NextResponse.json(logs);
+  return NextResponse.json(logs, {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {

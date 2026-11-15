@@ -39,7 +39,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
   const [isClearing, setIsClearing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [timeFilter, setTimeFilter] = useState<'all' | '30d' | '7d' | 'today'>('all');
-  const [actionFilter, setActionFilter] = useState<'all' | 'checkout' | 'return'>('all');
+  const [actionFilter, setActionFilter] = useState<'all' | 'checkout' | 'return' | 'in'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch latest logs
@@ -577,6 +577,16 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                 Semua
               </button>
               <button
+                onClick={() => setActionFilter('in')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  actionFilter === 'in'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-indigo-600'
+                }`}
+              >
+                Masuk
+              </button>
+              <button
                 onClick={() => setActionFilter('checkout')}
                 className={`px-2.5 py-1 rounded-md transition-all ${
                   actionFilter === 'checkout'
@@ -617,6 +627,8 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
             <tbody className="divide-y divide-gray-100 text-xs sm:text-sm">
               {tableLogs.map((log) => {
                 const isCheckout = log.action === 'checkout';
+                const isReturn = log.action === 'return';
+                const isIn = log.action === 'in' || log.action === 'masuk';
                 return (
                   <tr key={log.id} className="hover:bg-blue-50/40 transition-colors">
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
@@ -634,12 +646,14 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                          isCheckout
+                          isIn
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : isCheckout
                             ? 'bg-red-100 text-red-800 border border-red-200'
                             : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                         }`}
                       >
-                        {isCheckout ? 'Ambil' : 'Kembali'}
+                        {isIn ? 'Masuk' : isCheckout ? 'Ambil' : 'Kembali'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

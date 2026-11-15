@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getItems } from '@/lib/db';
+import { getItems, addItem, getItemBySerial, updateItem, addLog } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category') || undefined;
   const location = searchParams.get('location') || undefined;
   const items = await getItems(category, location);
-  return NextResponse.json(items);
+  return NextResponse.json(items, {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    let { serialNumber, name, category, location, rack, status } = body;
+    let { serialNumber, name, category, location, rack, status, person } = body;
     const quantity = Math.max(1, parseInt(body.quantity) || 1);
 
     if (!name || !name.trim()) {
@@ -24,12 +31,11 @@ export async function POST(request: NextRequest) {
     rack = rack?.trim() || 'Lemari 1 - Tingkat 1';
     status = status || 'available';
     category = category?.trim() || 'Umum';
-
-    const { addItem, getItemBySerial, updateItem, getItems } = await import('@/lib/db');
+    const logPerson = person?.trim() || 'Admin / Sistem';
 
     // If serialNumber is provided, use it; otherwise generate a clean unique serial code
     if (serialNumber && serialNumber.trim()) {
-      serialNumber = serialNumber.trim();
+      serialNumber = serialNumber.trim().toUpperCase();
     } else {
       // Auto generate serial based on name + unique identifier
       const prefix = trimmedName
@@ -40,7 +46,7 @@ export async function POST(request: NextRequest) {
       serialNumber = `${prefix}-${randomSuffix}`;
     }
 
-    // Check if item with this serial or exact same name in same rack already exists
+    // Check if item with this serial already exists
     const existing = await getItemBySerial(serialNumber);
     if (existing) {
       const newQty = Math.max(0, (existing.quantity || 0) + quantity);
@@ -52,10 +58,23 @@ export async function POST(request: NextRequest) {
         quantity: newQty,
         status: newQty > 0 ? 'available' : status,
       });
+
       if (updated) {
+        // Catat riwayat barang masuk (penambahan stok)
+        await addLog({
+          itemId: existing.id,
+          serialNumber: existing.serialNumber,
+          itemName: existing.name,
+          action: 'in',
+          person: logPerson,
+          location: `${rack} (${location})`,
+          quantity: quantity,
+          timestamp: new Date().toISOString(),
+        });
+
         return NextResponse.json({
           ...updated,
-          message: `Stok ${existing.name} ditambah ${quantity} pcs (total: ${updated.quantity} pcs) di ${rack}`
+          message: `Stok ${existing.name} (${existing.serialNumber}) ditambah ${quantity} pcs (total: ${updated.quantity} pcs) di ${rack}`
         }, { status: 200 });
       }
       return NextResponse.json({ error: 'Gagal mengupdate stok' }, { status: 500 });
@@ -70,6 +89,18 @@ export async function POST(request: NextRequest) {
       rack,
       status,
       quantity,
+    });
+
+    // Catat riwayat barang masuk (barang baru)
+    await addLog({
+      itemId: newItem.id,
+      serialNumber: newItem.serialNumber,
+      itemName: newItem.name,
+      action: 'in',
+      person: logPerson,
+      location: `${rack} (${location})`,
+      quantity: quantity,
+      timestamp: new Date().toISOString(),
     });
 
     return NextResponse.json(newItem, { status: 201 });
