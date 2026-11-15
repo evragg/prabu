@@ -298,7 +298,16 @@ export default function CabinetRackView({
     setAddMsg({ text: '', type: '' });
 
     try {
-      const res = await fetch('/api/items', {
+      const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: addFormData.name.trim(),
+            // sku optional – omitted will be auto‑generated
+            stock: addFormData.quantity || 1,
+            note: `Ditambahkan ke ${addFormRack.trim()}`,
+          }),
+        })
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
