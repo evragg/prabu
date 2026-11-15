@@ -878,7 +878,7 @@ export default function CabinetRackView({
       {/* MODAL TAMBAH BARANG (HANYA NAMA BARANG & QUANTITY)       */}
       {/* ======================================================== */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-sm rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in">
             {/* Modal Header */}
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
@@ -969,7 +969,7 @@ export default function CabinetRackView({
       {/* MODAL DETAIL SLOT SAAT TINGKAT/LACI DIKLIK               */}
       {/* ======================================================== */}
       {selectedSlot && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-lg rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in">
             {/* Modal Header */}
             <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
