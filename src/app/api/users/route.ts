@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { getUsers, createUser } from '@/lib/db';
+import { sanitizeText, validateUsername } from '@/lib/validation';
 
 async function checkAdmin(request: NextRequest): Promise<boolean> {
   const token = request.cookies.get('auth_token')?.value;
@@ -33,30 +34,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { username, name, password, role } = body;
 
-    if (!username || !name || !password) {
-      return NextResponse.json(
-        { error: 'Username, nama lengkap, dan password wajib diisi' },
-        { status: 400 }
-      );
+    const userCheck = validateUsername(username);
+    if (!userCheck.valid) {
+      return NextResponse.json({ error: userCheck.error }, { status: 400 });
     }
 
-    if (username.trim().length < 3) {
-      return NextResponse.json(
-        { error: 'Username minimal 3 karakter' },
-        { status: 400 }
-      );
+    const cleanName = sanitizeText(name, 80);
+    if (!cleanName || cleanName.length < 2) {
+      return NextResponse.json({ error: 'Nama lengkap wajib diisi (minimal 2 karakter)' }, { status: 400 });
     }
 
-    if (password.length < 4) {
-      return NextResponse.json(
-        { error: 'Password minimal 4 karakter' },
-        { status: 400 }
-      );
+    if (!password || typeof password !== 'string' || password.length < 4) {
+      return NextResponse.json({ error: 'Password minimal 4 karakter' }, { status: 400 });
+    }
+
+    if (password.length > 100) {
+      return NextResponse.json({ error: 'Password maksimal 100 karakter' }, { status: 400 });
     }
 
     const created = await createUser({
-      username: username.trim(),
-      name: name.trim(),
+      username: userCheck.value,
+      name: cleanName,
       password,
       role: role === 'admin' ? 'admin' : 'viewer',
     });

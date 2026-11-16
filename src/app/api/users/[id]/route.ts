@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { updateUser, deleteUser, getUserById, getUsers } from '@/lib/db';
+import { sanitizeText } from '@/lib/validation';
 
 async function getAdminPayload(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
@@ -30,19 +31,40 @@ export async function PATCH(
       return NextResponse.json({ error: 'Pengguna tidak ditemukan' }, { status: 404 });
     }
 
-    // Jika ingin downgrade role admin ke viewer, pastikan masih ada admin lain
-    if (role === 'viewer' && targetUser.role === 'admin') {
-      const allUsers = await getUsers();
-      const adminCount = allUsers.filter(u => u.role === 'admin').length;
-      if (adminCount <= 1) {
-        return NextResponse.json(
-          { error: 'Tidak dapat mengubah role: Sistem harus memiliki minimal 1 Admin aktif' },
-          { status: 400 }
-        );
+    const updateData: { name?: string; role?: string; password?: string } = {};
+
+    if (name !== undefined) {
+      const cleanName = sanitizeText(name, 80);
+      if (!cleanName || cleanName.length < 2) {
+        return NextResponse.json({ error: 'Nama minimal 2 karakter' }, { status: 400 });
       }
+      updateData.name = cleanName;
     }
 
-    const updated = await updateUser(id, { name, role, password });
+    if (role !== undefined) {
+      const cleanRole = role === 'admin' ? 'admin' : 'viewer';
+      // Jika ingin downgrade role admin ke viewer, pastikan masih ada admin lain
+      if (cleanRole === 'viewer' && targetUser.role === 'admin') {
+        const allUsers = await getUsers();
+        const adminCount = allUsers.filter(u => u.role === 'admin').length;
+        if (adminCount <= 1) {
+          return NextResponse.json(
+            { error: 'Tidak dapat mengubah role: Sistem harus memiliki minimal 1 Admin aktif' },
+            { status: 400 }
+          );
+        }
+      }
+      updateData.role = cleanRole;
+    }
+
+    if (password !== undefined && String(password).trim().length > 0) {
+      if (String(password).length < 4) {
+        return NextResponse.json({ error: 'Password minimal 4 karakter' }, { status: 400 });
+      }
+      updateData.password = String(password);
+    }
+
+    const updated = await updateUser(id, updateData);
     if (!updated) {
       return NextResponse.json({ error: 'Gagal memperbarui pengguna' }, { status: 500 });
     }

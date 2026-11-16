@@ -22,6 +22,8 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
   const [role, setRole] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'checked_out'>('all');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'serialNumber' | 'name' | 'rack' | 'quantity'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [visibleCount, setVisibleCount] = useState(16);
@@ -38,10 +40,21 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
     }
   }, []);
 
-  // Reset pagination limit when search or status filter changes
+  // Unique locations and categories for filter dropdowns
+  const uniqueLocations = useMemo(() => {
+    const set = new Set(initialItems.map((i) => i.location).filter(Boolean));
+    return Array.from(set).sort();
+  }, [initialItems]);
+
+  const uniqueCategories = useMemo(() => {
+    const set = new Set(initialItems.map((i) => i.category).filter(Boolean));
+    return Array.from(set).sort();
+  }, [initialItems]);
+
+  // Reset pagination limit when search or filters change
   useEffect(() => {
     setVisibleCount(16);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, locationFilter, categoryFilter]);
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -50,13 +63,23 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
       if (statusFilter !== 'all' && item.status !== statusFilter) {
         return false;
       }
-      // Search filter
+      // Location filter
+      if (locationFilter !== 'all' && item.location !== locationFilter) {
+        return false;
+      }
+      // Category filter
+      if (categoryFilter !== 'all' && item.category !== categoryFilter) {
+        return false;
+      }
+      // Search filter across all attributes (Plat Number, Nama, Rak, Lokasi, Kategori)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchSerial = item.serialNumber.toLowerCase().includes(q);
-        const matchName = item.name.toLowerCase().includes(q);
-        const matchRack = item.rack.toLowerCase().includes(q);
-        return matchSerial || matchName || matchRack;
+        const matchSerial = (item.serialNumber || '').toLowerCase().includes(q);
+        const matchName = (item.name || '').toLowerCase().includes(q);
+        const matchRack = (item.rack || '').toLowerCase().includes(q);
+        const matchLoc = (item.location || '').toLowerCase().includes(q);
+        const matchCat = (item.category || '').toLowerCase().includes(q);
+        return matchSerial || matchName || matchRack || matchLoc || matchCat;
       }
       return true;
     });
@@ -142,60 +165,122 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
         </div>
 
         {/* Search & Filter Controls */}
-        <div className="mt-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Search Bar */}
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari Plat Number, Nama O-Ring, atau Rak..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
-            />
-            <svg
-              className="w-4 h-4 text-slate-400 absolute left-3 top-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 font-bold"
+        <div className="mt-5 space-y-3">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Search Bar (Global: Plat Number, Nama, Rak, Lokasi, Kategori) */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari Plat Number, Nama, Rak, Lokasi, Kategori..."
+                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
+              />
+              <svg
+                className="w-4 h-4 text-slate-400 absolute left-3 top-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                ✕
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter Tabs */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start md:self-auto text-xs font-semibold text-slate-600">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  statusFilter === 'all' ? 'bg-white text-blue-900 shadow-sm font-bold' : 'hover:text-slate-900'
+                }`}
+              >
+                Semua ({totalItemsCount})
               </button>
-            )}
+              <button
+                onClick={() => setStatusFilter('available')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  statusFilter === 'available' ? 'bg-white text-green-700 shadow-sm font-bold' : 'hover:text-slate-900'
+                }`}
+              >
+                Tersedia ({availableCount})
+              </button>
+              <button
+                onClick={() => setStatusFilter('checked_out')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  statusFilter === 'checked_out' ? 'bg-white text-rose-700 shadow-sm font-bold' : 'hover:text-slate-900'
+                }`}
+              >
+                Habis ({checkedOutCount})
+              </button>
+            </div>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start md:self-auto text-xs font-semibold text-slate-600">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                statusFilter === 'all' ? 'bg-white text-blue-900 shadow-sm font-bold' : 'hover:text-slate-900'
-              }`}
-            >
-              Semua ({totalItemsCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('available')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                statusFilter === 'available' ? 'bg-white text-green-700 shadow-sm font-bold' : 'hover:text-slate-900'
-              }`}
-            >
-              Tersedia ({availableCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('checked_out')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                statusFilter === 'checked_out' ? 'bg-white text-rose-700 shadow-sm font-bold' : 'hover:text-slate-900'
-              }`}
-            >
-              Habis ({checkedOutCount})
-            </button>
+          {/* Secondary Filters: Lokasi & Kategori Dropdowns + Active Filter Counter & Reset */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-200/60 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Lokasi Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500 font-medium">Lokasi:</span>
+                <select
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-700 font-medium focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                >
+                  <option value="all">Semua Lokasi</option>
+                  {uniqueLocations.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Kategori Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500 font-medium">Kategori:</span>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-700 font-medium focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                >
+                  <option value="all">Semua Kategori</option>
+                  {uniqueCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Reset Filter Button */}
+              {(searchQuery || statusFilter !== 'all' || locationFilter !== 'all' || categoryFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setLocationFilter('all');
+                    setCategoryFilter('all');
+                  }}
+                  className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-semibold transition-colors flex items-center gap-1"
+                >
+                  <span>✕</span>
+                  <span>Reset Filter</span>
+                </button>
+              )}
+            </div>
+
+            {/* Results Counter */}
+            <div className="text-slate-500 font-medium">
+              Menampilkan <span className="font-bold text-slate-800">{filteredItems.length}</span> dari {totalItemsCount} varian barang
+            </div>
           </div>
         </div>
       </div>

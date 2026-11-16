@@ -38,9 +38,24 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [timeFilter, setTimeFilter] = useState<'all' | '30d' | '7d' | 'today'>('all');
+  const [timeFilter, setTimeFilter] = useState<'all' | '30d' | '7d' | 'today' | 'custom'>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<'all' | 'checkout' | 'return' | 'in'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Extract unique locations from logs
+  const uniqueLocations = useMemo(() => {
+    const locs = logs.map(l => l.location).filter(Boolean);
+    const cleaned = locs.map(l => {
+      // Ambil nama umum (misal: "Lab", "Module Room")
+      if (l.toLowerCase().includes('lab')) return 'Lab';
+      if (l.toLowerCase().includes('module')) return 'Module Room';
+      return l;
+    });
+    return Array.from(new Set(cleaned)).sort();
+  }, [logs]);
 
   // Fetch latest logs
   const fetchLogs = useCallback(async (showIndicator = false) => {
@@ -90,7 +105,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
     }
   };
 
-  // Filter logs by selected time range
+  // Filter logs by selected time range (including custom date picker)
   const timeFilteredLogs = useMemo(() => {
     const now = new Date();
     return logs.filter((log) => {
@@ -106,9 +121,21 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
         const diffDays = (now.getTime() - logDate.getTime()) / (1000 * 3600 * 24);
         return diffDays <= 30;
       }
+      if (timeFilter === 'custom') {
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (logDate < start) return false;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (logDate > end) return false;
+        }
+      }
       return true;
     });
-  }, [logs, timeFilter]);
+  }, [logs, timeFilter, startDate, endDate]);
 
   // Analyze checkouts (Ambil Barang)
   const checkoutAnalytics = useMemo(() => {
@@ -181,18 +208,47 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
   const tableLogs = useMemo(() => {
     return timeFilteredLogs.filter((log) => {
       if (actionFilter !== 'all' && log.action !== actionFilter) return false;
+      if (locationFilter !== 'all' && !log.location.toLowerCase().includes(locationFilter.toLowerCase())) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchSerial = log.serialNumber.toLowerCase().includes(q);
-        const matchName = log.itemName.toLowerCase().includes(q);
-        const matchPerson = log.person.toLowerCase().includes(q);
-        const matchLocation = log.location.toLowerCase().includes(q);
+        const matchSerial = (log.serialNumber || '').toLowerCase().includes(q);
+        const matchName = (log.itemName || '').toLowerCase().includes(q);
+        const matchPerson = (log.person || '').toLowerCase().includes(q);
+        const matchLocation = (log.location || '').toLowerCase().includes(q);
         return matchSerial || matchName || matchPerson || matchLocation;
       }
       return true;
     });
-  }, [timeFilteredLogs, actionFilter, searchQuery]);
+  }, [timeFilteredLogs, actionFilter, locationFilter, searchQuery]);
+
+  // Export filtered logs to CSV file (Excel-ready)
+  const handleExportCSV = () => {
+    if (tableLogs.length === 0) {
+      alert('Tidak ada data riwayat untuk diekspor');
+      return;
+    }
+    const headers = ['Waktu', 'Aksi', 'Plat Number', 'Nama Barang', 'Jumlah (Pcs)', 'Petugas / Pengambil', 'Lokasi'];
+    const rows = tableLogs.map((l) => [
+      `"${new Date(l.timestamp).toLocaleString('id-ID')}"`,
+      l.action === 'checkout' ? '"Keluar (Ambil)"' : l.action === 'return' ? '"Masuk (Kembali)"' : '"Masuk (Stok Baru)"',
+      `"${(l.serialNumber || '').replace(/"/g, '""')}"`,
+      `"${(l.itemName || '').replace(/"/g, '""')}"`,
+      l.quantity || 1,
+      `"${(l.person || '').replace(/"/g, '""')}"`,
+      `"${(l.location || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `log-aktivitas-inventory-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-6">
@@ -269,7 +325,29 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
             >
               Hari Ini
             </button>
+            <button
+              onClick={() => setTimeFilter('custom')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                timeFilter === 'custom'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-blue-600'
+              }`}
+            >
+              Kustom
+            </button>
           </div>
+
+          {/* Ekspor CSV Button */}
+          <button
+            onClick={handleExportCSV}
+            title="Download riwayat aktivitas ke file spreadsheet CSV"
+            className="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Ekspor CSV</span>
+          </button>
 
           {/* Toggle Live */}
           <button
@@ -314,6 +392,48 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
           </button>
         </div>
       </div>
+
+      {/* Custom Date Range Picker Bar (Shown when 'custom' is active) */}
+      {timeFilter === 'custom' && (
+        <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex flex-wrap items-center gap-3 text-xs">
+          <span className="font-bold text-blue-900 flex items-center gap-1.5">
+            <span>📅</span>
+            <span>Rentang Tanggal Kustom:</span>
+          </span>
+          <div className="flex items-center gap-2">
+            <label className="text-slate-600 font-medium">Dari:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 font-medium focus:ring-1 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-slate-600 font-medium">Sampai:</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 font-medium focus:ring-1 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          {(startDate || endDate) && (
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 rounded-lg font-medium transition-colors"
+            >
+              Reset Tanggal
+            </button>
+          )}
+          <span className="text-slate-400 text-[11px] ml-auto">
+            Menampilkan data sesuai rentang tanggal yang dipilih
+          </span>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -548,21 +668,35 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari SN, Petugas, Nama..."
+                placeholder="Cari SN, Petugas, Nama, Lokasi..."
                 className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none w-48 sm:w-60"
               />
               <span className="absolute left-2.5 top-2 text-slate-400 text-xs font-bold">
-                Q
+                🔍
               </span>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2 top-1.5 text-[10px] bg-slate-200 text-slate-600 px-1 rounded font-bold"
                 >
-                  X
+                  ✕
                 </button>
               )}
             </div>
+
+            {/* Location Filter Dropdown */}
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="all">Semua Lokasi</option>
+              {uniqueLocations.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
 
             {/* Action Filter */}
             <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-semibold">
