@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import UserManager from '@/components/UserManager';
+import LocationManager from '@/components/LocationManager';
 
 interface Item {
   id: string;
@@ -13,6 +14,8 @@ interface Item {
   rack: string;
   status: string;
   quantity?: number;
+  minStock?: number;
+  imageUrl?: string | null;
 }
 
 const MODULE_ROOM_RACKS: { group: string; racks: string[] }[] = [
@@ -72,7 +75,7 @@ const ALL_LAB_RACKS = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'items' | 'users'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'users' | 'locations'>('items');
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -82,13 +85,30 @@ export default function AdminPage() {
     location: 'Module Room',
     rack: 'Rak - A1',
     status: 'available',
-    quantity: 1
+    quantity: 1,
+    minStock: 3,
+    imageUrl: '',
   });
   const [editingSerial, setEditingSerial] = useState<string | null>(null);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [availableLocations, setAvailableLocations] = useState<string[]>([
+    'Module Room',
+    'Lab',
+    'Warehouse',
+    'Office',
+  ]);
 
   useEffect(() => {
     fetchItems();
+    fetch('/api/locations')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const names = data.map((d: any) => d.name);
+          setAvailableLocations((prev) => [...new Set([...prev, ...names])]);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const fetchItems = async () => {
@@ -112,6 +132,8 @@ export default function AdminPage() {
     const { name, value } = e.target;
     if (name === 'quantity') {
       setFormData({ ...formData, quantity: Math.max(0, parseInt(value) || 0) });
+    } else if (name === 'minStock') {
+      setFormData({ ...formData, minStock: Math.max(0, parseInt(value) || 0) });
     } else if (name === 'location') {
       let newRack = formData.rack;
       if (value === 'Module Room' && !ALL_MODULE_RACKS.includes(formData.rack)) {
@@ -135,6 +157,8 @@ export default function AdminPage() {
       rack: item.rack,
       status: item.status,
       quantity: item.quantity ?? 1,
+      minStock: item.minStock ?? 3,
+      imageUrl: item.imageUrl || '',
     });
     setMsg({ text: `Mode Edit: Mengubah data barang ${item.serialNumber}`, type: 'info' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -150,6 +174,8 @@ export default function AdminPage() {
       rack: 'Rak - A1',
       status: 'available',
       quantity: 1,
+      minStock: 3,
+      imageUrl: '',
     });
     setMsg({ text: '', type: '' });
   };
@@ -255,10 +281,23 @@ export default function AdminPage() {
           <span>👥</span>
           <span>Manajemen Pengguna</span>
         </button>
+        <button
+          onClick={() => setActiveTab('locations')}
+          className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'locations'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span>📍</span>
+          <span>Lokasi Dinamis</span>
+        </button>
       </div>
 
       {activeTab === 'users' ? (
         <UserManager />
+      ) : activeTab === 'locations' ? (
+        <LocationManager />
       ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form Tambah / Edit Barang */}
@@ -340,10 +379,14 @@ export default function AdminPage() {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                 >
-                  <option value="Module Room">Module Room</option>
-                  <option value="Lab">Lab</option>
-                  <option value="Warehouse">Warehouse</option>
-                  <option value="Office">Office</option>
+                  {availableLocations.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                  {!availableLocations.includes(formData.location) && formData.location && (
+                    <option value={formData.location}>{formData.location}</option>
+                  )}
                 </select>
               </div>
               <div>
@@ -405,6 +448,32 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+            {/* Min Stock Threshold */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Batas Stok Rendah (Alert Threshold)</label>
+              <input
+                type="number"
+                name="minStock"
+                min={0}
+                value={formData.minStock}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+              <p className="text-xs text-slate-400 mt-1">Peringatan ⚠ muncul saat stok ≤ nilai ini</p>
+            </div>
+            {/* URL Foto Barang */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">URL Foto Barang (Opsional)</label>
+              <input
+                type="url"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleChange}
+                placeholder="https://example.com/foto.jpg"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              />
+              <p className="text-xs text-slate-400 mt-1">Link langsung ke foto fisik barang</p>
+            </div>
             <div className="flex items-center gap-2 pt-2">
               <button
                 type="submit"
@@ -450,16 +519,35 @@ export default function AdminPage() {
                   {items.map((item) => (
                     <tr key={item.serialNumber} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-blue-900">{item.serialNumber}</div>
-                        <div className="text-sm text-gray-500">{item.name}</div>
+                        <div className="flex items-center gap-3">
+                          {item.imageUrl && (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-9 h-9 rounded-lg object-cover border border-slate-200 flex-shrink-0"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium text-blue-900">{item.serialNumber}</div>
+                            <div className="text-sm text-gray-500">{item.name}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {item.location} - {item.rack}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono font-bold text-blue-900 text-sm">
-                          {item.quantity ?? 1} pcs
-                        </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="font-mono font-bold text-blue-900 text-sm">
+                            {item.quantity ?? 1} pcs
+                          </span>
+                          {(item.quantity ?? 1) <= (item.minStock ?? 3) && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
+                              ⚠ Stok Rendah
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${

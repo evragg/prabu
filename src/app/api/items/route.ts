@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
     const cleanStatus = status === 'checked_out' ? 'checked_out' : 'available';
     const cleanCategory = sanitizeText(category, 60) || 'Umum';
     const logPerson = sanitizeText(person, 60) || 'Admin / Sistem';
+    const minStock = typeof body.minStock === 'number' ? Math.max(0, parseInt(String(body.minStock)) || 3) : 3;
+    const cleanImageUrl = body.imageUrl ? sanitizeText(body.imageUrl, 500) : null;
 
     // Validasi atau generate serialNumber
     let cleanSerial = '';
@@ -102,6 +104,8 @@ export async function POST(request: NextRequest) {
       rack: cleanRack,
       status: cleanStatus,
       quantity,
+      minStock,
+      imageUrl: cleanImageUrl,
     });
 
     // Catat riwayat barang masuk (barang baru)

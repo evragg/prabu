@@ -22,6 +22,8 @@ export interface Item {
   rack: string;
   status: string;
   quantity: number;
+  minStock?: number;
+  imageUrl?: string | null;
 }
 
 export interface LogEntry {
@@ -155,18 +157,46 @@ export async function getItemsByLocation(location: string): Promise<Item[]> {
 
 export async function getLocations(): Promise<string[]> {
   try {
-    const items = await prisma.item.findMany({
-      select: { location: true },
-      distinct: ['location'],
-    });
+    const [items, customLocs] = await Promise.all([
+      prisma.item.findMany({
+        select: { location: true },
+        distinct: ['location'],
+      }),
+      prisma.location.findMany({
+        select: { name: true },
+      }),
+    ]);
     const dbLocations = items.map((i) => i.location);
+    const customNames = customLocs.map((l) => l.name);
     const defaultLocations = ['Module Room', 'Lab'];
-    return [...new Set([...defaultLocations, ...dbLocations])];
+    return [...new Set([...defaultLocations, ...dbLocations, ...customNames])];
   } catch {
     const data = getFallbackData();
     const locs = data.items.map(i => i.location);
     return [...new Set(['Module Room', 'Lab', ...locs])];
   }
+}
+
+export async function getCustomLocations() {
+  try {
+    return await prisma.location.findMany({
+      orderBy: { name: 'asc' },
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function createLocation(name: string) {
+  return await prisma.location.create({
+    data: { name },
+  });
+}
+
+export async function deleteLocation(id: string) {
+  return await prisma.location.delete({
+    where: { id },
+  });
 }
 
 export async function getCategories(): Promise<string[]> {
@@ -201,6 +231,8 @@ export async function updateItem(
       rack?: string;
       quantity?: number;
       status?: string;
+      minStock?: number;
+      imageUrl?: string | null;
     } = {};
 
     if (data.serialNumber !== undefined) updateData.serialNumber = data.serialNumber.trim();
@@ -208,6 +240,8 @@ export async function updateItem(
     if (data.category !== undefined) updateData.category = data.category.trim();
     if (data.location !== undefined) updateData.location = data.location.trim();
     if (data.rack !== undefined) updateData.rack = data.rack.trim();
+    if (data.minStock !== undefined) updateData.minStock = Math.max(0, data.minStock);
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl?.trim() || null;
     if (data.quantity !== undefined) {
       updateData.quantity = Math.max(0, data.quantity);
       if (data.status === undefined) {
@@ -383,6 +417,8 @@ export async function addItem(itemData: Omit<Item, 'id'>): Promise<Item> {
         rack: itemData.rack,
         status: itemData.status,
         quantity: itemData.quantity || 1,
+        minStock: itemData.minStock !== undefined ? itemData.minStock : 3,
+        imageUrl: itemData.imageUrl || null,
       },
     });
     return newItem;

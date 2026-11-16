@@ -12,6 +12,8 @@ export interface InventoryItem {
   rack: string;
   status: string;
   quantity?: number;
+  minStock?: number;
+  imageUrl?: string | null;
 }
 
 interface DashboardORingListProps {
@@ -115,6 +117,7 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
   const availableCount = initialItems.filter((i) => i.status === 'available').length;
   const checkedOutCount = initialItems.filter((i) => i.status === 'checked_out').length;
   const totalPcs = initialItems.reduce((acc, i) => acc + (i.quantity ?? 1), 0);
+  const lowStockItems = initialItems.filter((i) => (i.quantity ?? 1) <= (i.minStock ?? 3) && i.status === 'available');
 
   const toggleSort = (field: 'serialNumber' | 'name' | 'rack' | 'quantity') => {
     if (sortBy === field) {
@@ -183,6 +186,11 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
               <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">
                 Total {totalPcs} Pcs
               </span>
+              {lowStockItems.length > 0 && (
+                <span className="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full border border-amber-300 animate-pulse">
+                  ⚠ {lowStockItems.length} Stok Rendah
+                </span>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Daftar stok dan ketersediaan barang inventaris.
@@ -329,6 +337,20 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
       {/* DAFTAR BARISAN KE BAWAH (DESKTOP TABLE + MOBILE ROWS)    */}
       {/* ======================================================== */}
 
+      {/* Low Stock Warning Banner */}
+      {lowStockItems.length > 0 && (
+        <div className="mx-6 mb-0 mt-2 p-3 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-3">
+          <span className="text-amber-600 text-lg mt-0.5">⚠</span>
+          <div>
+            <p className="text-sm font-bold text-amber-800">Peringatan Stok Rendah</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {lowStockItems.length} barang memiliki stok di bawah batas minimum:{' '}
+              <span className="font-semibold">{lowStockItems.map((i) => i.name || i.serialNumber).join(', ')}</span>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Desktop & Tablet Table View */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -395,11 +417,21 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div>
-                      <span className="font-semibold text-slate-900 block">{item.name}</span>
-                      {item.category && (
-                        <span className="text-[11px] text-slate-400 font-medium">{item.category}</span>
+                    <div className="flex items-center gap-3">
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
                       )}
+                      <div>
+                        <span className="font-semibold text-slate-900 block">{item.name}</span>
+                        {item.category && (
+                          <span className="text-[11px] text-slate-400 font-medium">{item.category}</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -413,15 +445,22 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-mono font-bold ${
-                        isAvailable
-                          ? 'bg-blue-50 text-blue-800 border border-blue-200'
-                          : 'bg-rose-50 text-rose-800 border border-rose-200'
-                      }`}
-                    >
-                      {qty} pcs
-                    </span>
+                    <div className="flex flex-col items-center gap-1">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-mono font-bold ${
+                          isAvailable
+                            ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                            : 'bg-rose-50 text-rose-800 border border-rose-200'
+                        }`}
+                      >
+                        {qty} pcs
+                      </span>
+                      {qty <= (item.minStock ?? 3) && isAvailable && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
+                          ⚠ Stok Rendah
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span
@@ -465,14 +504,24 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
           return (
             <div key={item.id || item.serialNumber} className="p-4 space-y-3 hover:bg-slate-50 transition-colors">
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200">
-                    {item.serialNumber}
-                  </span>
-                  <h3 className="font-bold text-slate-900 text-sm mt-1">{item.name}</h3>
-                  {item.category && (
-                    <span className="text-[10px] text-slate-400">{item.category}</span>
+                <div className="flex items-start gap-2.5">
+                  {item.imageUrl && (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-10 h-10 rounded-lg object-cover border border-slate-200 flex-shrink-0 mt-0.5"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
                   )}
+                  <div>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200">
+                      {item.serialNumber}
+                    </span>
+                    <h3 className="font-bold text-slate-900 text-sm mt-1">{item.name}</h3>
+                    {item.category && (
+                      <span className="text-[10px] text-slate-400">{item.category}</span>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
@@ -487,9 +536,16 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
                 <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                   {item.rack} {item.location ? `• ${item.location}` : ''}
                 </span>
-                <span className="font-mono font-bold text-slate-800 text-sm">
-                  {qty} <span className="text-xs font-normal text-slate-500">pcs</span>
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="font-mono font-bold text-slate-800 text-sm">
+                    {qty} <span className="text-xs font-normal text-slate-500">pcs</span>
+                  </span>
+                  {qty <= (item.minStock ?? 3) && isAvailable && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
+                      ⚠ Stok Rendah
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div>

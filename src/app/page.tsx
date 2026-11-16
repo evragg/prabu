@@ -19,6 +19,8 @@ export default async function HomePage() {
     rack: item.rack,
     status: item.status,
     quantity: item.quantity ?? 1,
+    minStock: item.minStock ?? 3,
+    imageUrl: item.imageUrl ?? null,
   }));
 
   return (

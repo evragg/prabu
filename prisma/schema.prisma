@@ -17,6 +17,8 @@ model Item {
   rack         String
   status       String     @default("available") // "available" or "checked_out"
   quantity     Int        @default(1)            // Stock count for this item
+  minStock     Int        @default(3)            // Threshold alert stok rendah
+  imageUrl     String?                           // URL foto fisik barang (opsional)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   logs         LogEntry[]
@@ -27,7 +29,7 @@ model LogEntry {
   itemId       String?
   serialNumber String
   itemName     String
-  action       String   // "checkout" or "return"
+  action       String   // "checkout", "return", "in", "create", "update", "delete"
   person       String
   location     String
   quantity     Int      @default(1)  // How many were taken/returned in this transaction
@@ -41,6 +43,13 @@ model User {
   name      String
   password  String   // SHA-256 password hash
   role      String   @default("viewer") // "admin" or "viewer"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

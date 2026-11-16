@@ -10,6 +10,7 @@ interface ContactAdminModalProps {
     location?: string;
     category?: string;
     quantity?: number;
+    imageUrl?: string | null;
   } | null;
 }
 
@@ -64,11 +65,20 @@ export default function ContactAdminModal({ isOpen, onClose, item }: ContactAdmi
           {/* Item Preview Card (E-Commerce style product summary) */}
           <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
-                <span className="font-mono text-xs font-black text-blue-800">
-                  {item.serialNumber.slice(0, 4)}
-                </span>
-              </div>
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  className="w-14 h-14 rounded-xl object-cover border border-slate-200 flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
+                  <span className="font-mono text-xs font-black text-blue-800">
+                    {item.serialNumber.slice(0, 4)}
+                  </span>
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
                   {item.category || 'O-Ring'}

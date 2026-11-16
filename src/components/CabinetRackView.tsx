@@ -15,6 +15,8 @@ export interface InventoryItem {
   rack: string;
   status: string;
   quantity: number;
+  minStock?: number;
+  imageUrl?: string | null;
 }
 
 interface CabinetRackViewProps {
@@ -694,6 +696,9 @@ export default function CabinetRackView({
                                               <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-[11px] shrink-0">
                                                 {item.quantity ?? 1} pcs
                                               </span>
+                                              {(item.quantity ?? 1) <= (item.minStock ?? 3) && item.status === 'available' && (
+                                                <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">⚠</span>
+                                              )}
                                             </div>
                                           ))}
                                           <div className="text-right text-[11px] text-blue-600 font-semibold pt-0.5">
@@ -829,13 +834,20 @@ export default function CabinetRackView({
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-slate-900">{item.name}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded font-medium mt-1 inline-block ${
-                        item.quantity > 0 && item.status === 'available'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200'
-                      }`}>
-                        {item.quantity || 0} pcs
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium inline-block ${
+                          item.quantity > 0 && item.status === 'available'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}>
+                          {item.quantity || 0} pcs
+                        </span>
+                        {item.quantity <= (item.minStock ?? 3) && item.status === 'available' && item.quantity > 0 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
+                            ⚠ Stok Rendah
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <StatusBadge status={item.status} />
                   </div>
@@ -1122,7 +1134,7 @@ export default function CabinetRackView({
                             <h4 className="font-semibold text-sm text-slate-900">
                               {item.name}
                             </h4>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span
                                 className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
                                   isAvailable
@@ -1132,10 +1144,25 @@ export default function CabinetRackView({
                               >
                                 Sisa: {qty} pcs
                               </span>
+                              {qty <= (item.minStock ?? 3) && isAvailable && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
+                                  ⚠ Stok Rendah
+                                </span>
+                              )}
                             </div>
                           </div>
                           <StatusBadge status={item.status} />
                         </div>
+                        {item.imageUrl && (
+                          <div className="mt-2">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-28 object-cover rounded-lg border border-slate-200"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
 
                         <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
                           {isAvailable ? (
@@ -1236,3 +1263,4 @@ export default function CabinetRackView({
     </div>
   );
 }
+

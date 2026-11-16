@@ -65,6 +65,14 @@ export async function PATCH(
       }
     }
 
+    if (body.minStock !== undefined) {
+      updateData.minStock = Math.max(0, parseInt(String(body.minStock)) || 0);
+    }
+
+    if (body.imageUrl !== undefined) {
+      updateData.imageUrl = body.imageUrl ? sanitizeText(body.imageUrl, 500) : null;
+    }
+
     const item = await updateItem(cleanSerial, updateData);
     if (!item) {
       return NextResponse.json({ error: 'Barang tidak ditemukan atau gagal diperbarui' }, { status: 404 });

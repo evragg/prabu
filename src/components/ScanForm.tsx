@@ -2,6 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const QRCameraScanner = dynamic(() => import('./QRCameraScanner'), { ssr: false });
 
 interface Item {
   id: string;
@@ -28,6 +31,7 @@ function ScanFormInner({ location }: { location: string }) {
   const [success, setSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [error, setError] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const locationSlug = location.toLowerCase().replace(/\s+/g, '-');
 
@@ -175,7 +179,20 @@ function ScanFormInner({ location }: { location: string }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Pilih Barang</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">Pilih Barang</label>
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+            title="Scan QR Code / Barcode barang menggunakan kamera"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9V5a2 2 0 012-2h4M3 15v4a2 2 0 002 2h4M21 9V5a2 2 0 00-2-2h-4M21 15v4a2 2 0 01-2 2h-4M9 12h6" />
+            </svg>
+            Scan Kamera
+          </button>
+        </div>
         <select
           value={selectedSerial}
           onChange={(e) => {
@@ -293,6 +310,27 @@ function ScanFormInner({ location }: { location: string }) {
           ? `Ambil ${quantity} Barang`
           : 'Kembalikan Barang'}
       </button>
+
+      {/* QR Camera Scanner Modal */}
+      {showScanner && (
+        <QRCameraScanner
+          onScan={(scannedSerial) => {
+            setShowScanner(false);
+            // Try to match scanned text to an item serial number
+            const matched = items.find(
+              (i) => i.serialNumber.toLowerCase() === scannedSerial.toLowerCase()
+            );
+            if (matched) {
+              setSelectedSerial(matched.serialNumber);
+              setQuantity(1);
+            } else {
+              setSelectedSerial(scannedSerial);
+              setError(`Barang dengan Plat Number "${scannedSerial}" tidak ditemukan di lokasi ini.`);
+            }
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </form>
   );
 }

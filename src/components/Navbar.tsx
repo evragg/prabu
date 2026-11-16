@@ -11,6 +11,41 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isLocationActive = pathname.startsWith('/location');
   const [isLocationOpen, setIsLocationOpen] = useState(isLocationActive);
+  const [isDark, setIsDark] = useState(false);
+  const [dynamicLocations, setDynamicLocations] = useState<string[]>(['Module Room', 'Lab']);
+
+  useEffect(() => {
+    fetch('/api/locations')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const custom = data.map((d: any) => d.name);
+          setDynamicLocations((prev) => [...new Set([...prev, ...custom])]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load dark mode preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('darkMode');
+    if (saved === 'true') {
+      document.documentElement.classList.add('dark');
+      setIsDark(true);
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDark = !isDark;
+    setIsDark(newDark);
+    if (newDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  };
 
   useEffect(() => {
     // Basic cookie parsing
@@ -88,6 +123,25 @@ export default function Navbar() {
                   {role}
                 </span>
               )}
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                type="button"
+                className="inline-flex items-center justify-center p-2.5 rounded-xl bg-blue-700/50 hover:bg-blue-700 text-white border border-blue-600/60 focus:outline-none transition-all shadow-sm active:scale-95"
+                aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
+                title={isDark ? 'Mode Terang' : 'Mode Gelap'}
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 110 10A5 5 0 0112 7z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
 
               {/* Tombol Tiga Garis (Hamburger Button) */}
               <button
@@ -244,42 +298,31 @@ export default function Navbar() {
 
             {/* Sub-menu Dropdown Items */}
             {isLocationOpen && (
-              <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-blue-200 ml-5 my-1 animate-fade-in">
-                {/* Module Room */}
-                <Link
-                  href="/location/module-room"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    pathname === '/location/module-room'
-                      ? 'bg-blue-700 text-white font-bold shadow-sm'
-                      : 'text-slate-600 hover:bg-blue-50 hover:text-blue-800'
-                  }`}
-                >
-                  <span className={pathname === '/location/module-room' ? 'text-white' : 'text-slate-400'}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                  </span>
-                  <span>Module Room</span>
-                </Link>
-
-                {/* Lab */}
-                <Link
-                  href="/location/lab"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    pathname === '/location/lab'
-                      ? 'bg-blue-700 text-white font-bold shadow-sm'
-                      : 'text-slate-600 hover:bg-blue-50 hover:text-blue-800'
-                  }`}
-                >
-                  <span className={pathname === '/location/lab' ? 'text-white' : 'text-slate-400'}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                    </svg>
-                  </span>
-                  <span>Lab</span>
-                </Link>
+              <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-blue-200 ml-5 my-1 animate-fade-in max-h-60 overflow-y-auto">
+                {dynamicLocations.map((loc) => {
+                  const slug = loc.toLowerCase().replace(/[\s-]+/g, '-');
+                  const path = `/location/${slug}`;
+                  const isActive = pathname === path;
+                  return (
+                    <Link
+                      key={loc}
+                      href={path}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        isActive
+                          ? 'bg-blue-700 text-white font-bold shadow-sm'
+                          : 'text-slate-600 hover:bg-blue-50 hover:text-blue-800'
+                      }`}
+                    >
+                      <span className={isActive ? 'text-white' : 'text-slate-400'}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                      </span>
+                      <span>{loc}</span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
