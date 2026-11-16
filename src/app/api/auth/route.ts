@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
-import { signToken } from '@/lib/auth';
-
-const SALT = process.env.PASSWORD_SALT || 'slb-tlm-inv-salt-x9k2';
-
-function hashPassword(password: string): string {
-  return createHash('sha256').update(password + SALT).digest('hex');
-}
-
-// Password disimpan sebagai hash, bukan plaintext
-const USERS: Record<string, { passwordHash: string; role: string }> = {
-  admin: { passwordHash: hashPassword('admin'), role: 'admin' },
-  evra: { passwordHash: hashPassword('evra'), role: 'admin' },
-  prabu: { passwordHash: hashPassword('prabu'), role: 'viewer' },
-};
+import { signToken, hashPassword } from '@/lib/auth';
+import { getUserByUsername } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +12,7 @@ export async function POST(request: NextRequest) {
       const token = await signToken({ role: 'viewer' });
       const response = NextResponse.json({ success: true, role: 'viewer' });
 
-      // JWT httpOnly cookie (digunakan middleware untuk auth & security)
+      // JWT httpOnly cookie (digunakan middleware untuk validasi keamanan)
       response.cookies.set('auth_token', token, {
         path: '/',
         maxAge: 60 * 60 * 24,
@@ -45,12 +32,22 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    const user = USERS[username as keyof typeof USERS];
-    const inputHash = hashPassword(password || '');
+    if (!username || !password) {
+      return NextResponse.json({ error: 'Username dan password wajib diisi' }, { status: 400 });
+    }
 
-    if (user && user.passwordHash === inputHash) {
-      const token = await signToken({ role: user.role, username });
-      const response = NextResponse.json({ success: true, role: user.role });
+    // Ambil data user dari database / fallback store
+    const user = await getUserByUsername(username.trim());
+    const inputHash = hashPassword(password);
+
+    if (user && user.password === inputHash) {
+      const token = await signToken({ role: user.role, username: user.username });
+      const response = NextResponse.json({
+        success: true,
+        role: user.role,
+        username: user.username,
+        name: user.name,
+      });
 
       // JWT httpOnly cookie
       response.cookies.set('auth_token', token, {

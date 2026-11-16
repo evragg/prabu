@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import UserManager from '@/components/UserManager';
 
 interface Item {
   id: string;
@@ -71,6 +72,7 @@ const ALL_LAB_RACKS = [
 
 export default function AdminPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'items' | 'users'>('items');
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -223,9 +225,41 @@ export default function AdminPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-blue-900">Admin Panel</h1>
-        <p className="text-gray-500 mt-1">Kelola data inventory (Tambah & Hapus Barang)</p>
+        <p className="text-gray-500 mt-1">Kelola data inventaris dan hak akses pengguna sistem</p>
       </div>
 
+      {/* Tab Switcher */}
+      <div className="flex border-b border-slate-200 gap-2">
+        <button
+          onClick={() => setActiveTab('items')}
+          className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'items'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span>📦</span>
+          <span>Master Data Barang</span>
+          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
+            {items.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('users')}
+          className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'users'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span>👥</span>
+          <span>Manajemen Pengguna</span>
+        </button>
+      </div>
+
+      {activeTab === 'users' ? (
+        <UserManager />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form Tambah / Edit Barang */}
         <div className="bg-white rounded-xl shadow-sm border border-blue-100 p-6 h-fit">
@@ -458,6 +492,7 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

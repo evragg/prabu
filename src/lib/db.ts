@@ -1,6 +1,17 @@
 import { prisma } from './prisma';
+import { hashPassword } from './auth';
 import fs from 'fs';
 import path from 'path';
+
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  password?: string;
+  role: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
 
 export interface Item {
   id: string;
@@ -28,11 +39,21 @@ export interface LogEntry {
 // Fallback Memory/JSON Store
 const FALLBACK_FILE = path.join(process.cwd(), 'data', 'inventory.json');
 
-function getFallbackData(): { items: Item[]; logs: LogEntry[] } {
+const DEFAULT_USERS: User[] = [
+  { id: 'u1', username: 'admin', name: 'Administrator', password: hashPassword('admin'), role: 'admin' },
+  { id: 'u2', username: 'evra', name: 'Evra', password: hashPassword('evra'), role: 'admin' },
+  { id: 'u3', username: 'prabu', name: 'Prabu', password: hashPassword('prabu'), role: 'viewer' },
+];
+
+function getFallbackData(): { items: Item[]; logs: LogEntry[]; users?: User[] } {
   try {
     if (fs.existsSync(FALLBACK_FILE)) {
       const raw = fs.readFileSync(FALLBACK_FILE, 'utf-8');
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (!parsed.users || parsed.users.length === 0) {
+        parsed.users = DEFAULT_USERS;
+      }
+      return parsed;
     }
   } catch {
     // ignore
@@ -50,11 +71,12 @@ function getFallbackData(): { items: Item[]; logs: LogEntry[] } {
       { id: '9', category: 'MRTM-2245', serialNumber: '2245', name: 'MRTM', location: 'Module Room', rack: 'Rak - D4', status: 'checked_out', quantity: 1 },
       { id: '10', category: 'O-Ring', serialNumber: 'BO11880', name: 'O-Ring 40mm FKM', location: 'Module Room', rack: 'Rak - A2', status: 'available', quantity: 5 }
     ],
-    logs: []
+    logs: [],
+    users: DEFAULT_USERS
   };
 }
 
-function saveFallbackData(data: { items: Item[]; logs: LogEntry[] }) {
+function saveFallbackData(data: { items: Item[]; logs: LogEntry[]; users?: User[] }) {
   try {
     fs.writeFileSync(FALLBACK_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch {
@@ -432,5 +454,199 @@ export async function updateItemQuantity(
       return item;
     }
     return null;
+  }
+}
+
+// ================= USER MANAGEMENT =================
+
+export async function ensureDefaultUsers(): Promise<void> {
+  try {
+    const count = await prisma.user.count();
+    if (count === 0) {
+      for (const u of DEFAULT_USERS) {
+        await prisma.user.create({
+          data: {
+            username: u.username,
+            name: u.name,
+            password: u.password!,
+            role: u.role,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to ensure default users in database:', err);
+  }
+}
+
+export async function getUsers(): Promise<User[]> {
+  try {
+    await ensureDefaultUsers();
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return users as User[];
+  } catch {
+    const data = getFallbackData();
+    return (data.users || DEFAULT_USERS).map(u => ({
+      id: u.id,
+      username: u.username,
+      name: u.name,
+      role: u.role,
+      createdAt: u.createdAt || new Date().toISOString(),
+    }));
+  }
+}
+
+export async function getUserByUsername(username: string): Promise<User | null> {
+  try {
+    await ensureDefaultUsers();
+    const user = await prisma.user.findFirst({
+      where: { username: { equals: username, mode: 'insensitive' } },
+    });
+    return user as User | null;
+  } catch {
+    const data = getFallbackData();
+    const found = (data.users || DEFAULT_USERS).find(
+      u => u.username.toLowerCase() === username.toLowerCase()
+    );
+    return found || null;
+  }
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    return user as User | null;
+  } catch {
+    const data = getFallbackData();
+    const found = (data.users || DEFAULT_USERS).find(u => u.id === id);
+    return found || null;
+  }
+}
+
+export async function createUser(data: {
+  username: string;
+  name: string;
+  password: string;
+  role: string;
+}): Promise<User | null> {
+  const hashedPassword = hashPassword(data.password);
+  const usernameClean = data.username.trim().toLowerCase();
+
+  try {
+    const created = await prisma.user.create({
+      data: {
+        username: usernameClean,
+        name: data.name.trim(),
+        password: hashedPassword,
+        role: data.role === 'admin' ? 'admin' : 'viewer',
+      },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+    return created as User;
+  } catch {
+    const fb = getFallbackData();
+    if (!fb.users) fb.users = [...DEFAULT_USERS];
+    if (fb.users.some(u => u.username.toLowerCase() === usernameClean)) {
+      return null;
+    }
+    const newUser: User = {
+      id: `u-${Date.now()}`,
+      username: usernameClean,
+      name: data.name.trim(),
+      password: hashedPassword,
+      role: data.role === 'admin' ? 'admin' : 'viewer',
+      createdAt: new Date().toISOString(),
+    };
+    fb.users.push(newUser);
+    saveFallbackData(fb);
+    return {
+      id: newUser.id,
+      username: newUser.username,
+      name: newUser.name,
+      role: newUser.role,
+      createdAt: newUser.createdAt,
+    };
+  }
+}
+
+export async function updateUser(
+  id: string,
+  data: { name?: string; role?: string; password?: string }
+): Promise<User | null> {
+  const updateData: Record<string, string> = {};
+  if (data.name) updateData.name = data.name.trim();
+  if (data.role) updateData.role = data.role === 'admin' ? 'admin' : 'viewer';
+  if (data.password && data.password.trim().length > 0) {
+    updateData.password = hashPassword(data.password.trim());
+  }
+
+  try {
+    const updated = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return updated as User;
+  } catch {
+    const fb = getFallbackData();
+    if (!fb.users) fb.users = [...DEFAULT_USERS];
+    const idx = fb.users.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      fb.users[idx] = {
+        ...fb.users[idx],
+        ...(data.name ? { name: data.name.trim() } : {}),
+        ...(data.role ? { role: data.role === 'admin' ? 'admin' : 'viewer' } : {}),
+        ...(data.password ? { password: hashPassword(data.password.trim()) } : {}),
+        updatedAt: new Date().toISOString(),
+      };
+      saveFallbackData(fb);
+      return {
+        id: fb.users[idx].id,
+        username: fb.users[idx].username,
+        name: fb.users[idx].name,
+        role: fb.users[idx].role,
+      };
+    }
+    return null;
+  }
+}
+
+export async function deleteUser(id: string): Promise<boolean> {
+  try {
+    await prisma.user.delete({ where: { id } });
+    return true;
+  } catch {
+    const fb = getFallbackData();
+    if (!fb.users) fb.users = [...DEFAULT_USERS];
+    const idx = fb.users.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      fb.users.splice(idx, 1);
+      saveFallbackData(fb);
+      return true;
+    }
+    return false;
   }
 }

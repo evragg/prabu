@@ -1,8 +1,15 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { createHash } from 'crypto';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'slb-tlm-inventory-default-secret-2026'
 );
+
+const SALT = process.env.PASSWORD_SALT || 'slb-tlm-inv-salt-x9k2';
+
+export function hashPassword(password: string): string {
+  return createHash('sha256').update(password + SALT).digest('hex');
+}
 
 export interface AuthPayload {
   role: string;

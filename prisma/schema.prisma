@@ -34,3 +34,13 @@ model LogEntry {
   timestamp    DateTime @default(now())
   item         Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
 }
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  name      String
+  password  String   // SHA-256 password hash
+  role      String   @default("viewer") // "admin" or "viewer"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
