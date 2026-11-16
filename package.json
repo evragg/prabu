@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "jose": "^6.2.17",
     "next": "^15.1.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",

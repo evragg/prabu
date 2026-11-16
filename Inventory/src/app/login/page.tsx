@@ -39,18 +39,19 @@ export default function LoginPage() {
   const handleContinueWithoutLogin = async () => {
     setGuestLoading(true);
     try {
-      await fetch('/api/auth', {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ guest: true })
       });
+      if (res.ok) {
+        window.location.href = '/';
+        return;
+      }
     } catch (err) {
-      console.error('Failed to set guest cookie on server:', err);
+      console.error('Failed to set guest session on server:', err);
     }
-    // Set cookie on client as fallback
-    document.cookie = 'user_role=viewer; path=/; max-age=86400; SameSite=Lax';
-    // Full navigation to ensure middleware picks up the cookie immediately
-    window.location.href = '/';
+    setGuestLoading(false);
   };
 
   return (
