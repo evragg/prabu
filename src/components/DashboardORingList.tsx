@@ -136,6 +136,34 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
     }
   };
 
+  // Export filtered items to Excel-ready CSV
+  const handleExportCSV = () => {
+    if (filteredItems.length === 0) {
+      alert('Tidak ada data barang untuk diekspor');
+      return;
+    }
+    const headers = ['Plat Number', 'Nama Barang', 'Kategori', 'Lokasi', 'Rak', 'Stok (Pcs)', 'Status'];
+    const rows = filteredItems.map((item) => [
+      `"${(item.serialNumber || '').replace(/"/g, '""')}"`,
+      `"${(item.name || '').replace(/"/g, '""')}"`,
+      `"${(item.category || '').replace(/"/g, '""')}"`,
+      `"${(item.location || '').replace(/"/g, '""')}"`,
+      `"${(item.rack || '').replace(/"/g, '""')}"`,
+      item.quantity ?? 1,
+      item.status === 'available' ? '"Tersedia"' : '"Habis / Dipinjam"',
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `daftar-inventaris-barang-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
       {/* Header Section */}
@@ -161,7 +189,19 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
             </p>
           </div>
 
-
+          {/* Ekspor CSV Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 self-start md:self-auto cursor-pointer"
+              title="Unduh daftar inventaris barang yang difilter ke format Excel / CSV"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Ekspor CSV Barang</span>
+            </button>
+          </div>
         </div>
 
         {/* Search & Filter Controls */}
