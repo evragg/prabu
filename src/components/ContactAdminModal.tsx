@@ -20,7 +20,7 @@ export default function ContactAdminModal({ isOpen, onClose, item }: ContactAdmi
   const stock = item.quantity ?? 1;
   const phoneNumber = '6287823175874';
   const displayPhone = '+62 878-2317-5874';
-  const messageText = `Halo Admin, saya ingin konfirmasi / mengambil barang berikut:\n- Plat Number: ${item.serialNumber}\n- Nama Barang: ${item.name}\n- Posisi: ${item.rack || item.location || '-'}\nMohon bantuannya, terima kasih.`;
+  const messageText = `Halo Admin, saya ingin konfirmasi / mengambil barang berikut:\n- Nama Barang: ${item.name}\n- Posisi: ${item.rack || item.location || '-'}\nMohon bantuannya, terima kasih.`;
   const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageText)}`;
 
   return (
@@ -73,10 +73,10 @@ export default function ContactAdminModal({ isOpen, onClose, item }: ContactAdmi
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
-                <div className="w-12 h-12 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
-                  <span className="font-mono text-xs font-black text-blue-800">
-                    {item.serialNumber.slice(0, 4)}
-                  </span>
+                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -86,9 +86,6 @@ export default function ContactAdminModal({ isOpen, onClose, item }: ContactAdmi
                 <h4 className="font-bold text-slate-900 text-sm mt-1 truncate">
                   {item.name}
                 </h4>
-                <p className="text-xs text-slate-500 font-mono mt-0.5">
-                  Plat: <strong className="text-blue-900">{item.serialNumber}</strong>
-                </p>
               </div>
             </div>
 
