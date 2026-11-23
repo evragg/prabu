@@ -228,11 +228,10 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
       alert('Tidak ada data riwayat untuk diekspor');
       return;
     }
-    const headers = ['Waktu', 'Aksi', 'Kode Barang', 'Nama Barang', 'Jumlah (Pcs)', 'Petugas / Pengambil', 'Lokasi'];
+    const headers = ['Waktu', 'Aksi', 'Nama Barang', 'Jumlah (Pcs)', 'Petugas / Pengambil', 'Lokasi'];
     const rows = tableLogs.map((l) => [
       `"${new Date(l.timestamp).toLocaleString('id-ID')}"`,
       l.action === 'checkout' ? '"Keluar (Ambil)"' : l.action === 'return' ? '"Masuk (Kembali)"' : '"Masuk (Stok Baru)"',
-      `"${(l.serialNumber || '').replace(/"/g, '""')}"`,
       `"${(l.itemName || '').replace(/"/g, '""')}"`,
       l.quantity || 1,
       `"${(l.person || '').replace(/"/g, '""')}"`,
@@ -471,12 +470,12 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
             </span>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-black text-amber-950 font-mono block truncate">
-              {checkoutAnalytics.topItem ? checkoutAnalytics.topItem.serialNumber : '-'}
+            <span className="text-lg font-bold text-amber-950 block truncate">
+              {checkoutAnalytics.topItem ? checkoutAnalytics.topItem.itemName : '-'}
             </span>
             <p className="text-xs font-semibold text-amber-800 mt-0.5 truncate">
               {checkoutAnalytics.topItem
-                ? `${checkoutAnalytics.topItem.totalQty} pcs (${checkoutAnalytics.topItem.itemName})`
+                ? `Total ${checkoutAnalytics.topItem.totalQty} pcs terpakai`
                 : 'Belum ada data'}
             </p>
           </div>
@@ -614,10 +613,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
 
                       {/* Item Details */}
                       <div className="min-w-0">
-                        <span className="font-mono font-black text-blue-950 text-sm tracking-wide block truncate">
-                          {slice.serialNumber}
-                        </span>
-                        <span className="text-xs text-slate-500 truncate block">
+                        <span className="font-bold text-slate-900 text-sm tracking-tight block truncate">
                           {slice.itemName}
                         </span>
                       </div>
@@ -670,7 +666,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari SN, Petugas, Nama, Lokasi..."
+                placeholder="Cari Nama Barang, Petugas, Lokasi..."
                 className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none w-48 sm:w-60"
               />
               <svg className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -755,7 +751,6 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                 <th className="px-4 py-3">Petugas</th>
                 <th className="px-4 py-3">Aksi</th>
                 <th className="px-4 py-3">Jumlah (Pcs)</th>
-                <th className="px-4 py-3">Kode Barang</th>
                 <th className="px-4 py-3">Nama Barang</th>
                 <th className="px-4 py-3">Lokasi</th>
               </tr>
@@ -798,10 +793,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                         <span className="text-xs font-normal text-slate-500">pcs</span>
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono font-bold text-blue-700">
-                      {log.serialNumber}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">{log.itemName}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{log.itemName}</td>
                     <td className="px-4 py-3 text-slate-500 text-xs">{log.location}</td>
                   </tr>
                 );

@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           ...updated,
-          message: `Stok ${existing.name} (${existing.serialNumber}) ditambah ${quantity} pcs (total: ${updated.quantity} pcs) di ${cleanRack}`
+          message: `Stok ${existing.name} ditambah ${quantity} pcs (total: ${updated.quantity} pcs) di ${cleanRack}`
         }, { status: 200 });
       }
       return NextResponse.json({ error: 'Gagal mengupdate stok' }, { status: 500 });

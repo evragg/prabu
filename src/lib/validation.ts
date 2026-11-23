@@ -49,12 +49,12 @@ export function validateQuantity(
 }
 
 /**
- * Validasi serial number (Plat Number).
+ * Validasi serial number / kode unik sistem.
  * Mengizinkan karakter alfanumerik, strip, underscore, titik, slash, dan spasi tunggal.
  */
 export function validateSerialNumber(serial: unknown): { valid: boolean; value: string; error?: string } {
   if (typeof serial !== 'string') {
-    return { valid: false, value: '', error: 'Serial number / Plat Number wajib berupa teks' };
+    return { valid: false, value: '', error: 'Kode barang wajib berupa teks' };
   }
 
   const clean = sanitizeText(serial, 50).toUpperCase();

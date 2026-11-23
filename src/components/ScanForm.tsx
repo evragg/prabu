@@ -279,7 +279,7 @@ function ScanFormInner({ location }: { location: string }) {
           <div className="pt-2 border-t border-blue-200/60 text-xs text-blue-900">
             <div className="flex justify-between items-center">
               <span>
-                <span className="font-semibold">{selectedItem.name}</span> ({selectedItem.serialNumber})
+                <span className="font-semibold">{selectedItem.name}</span>
               </span>
               <span className="font-bold text-base text-blue-800">
                 {quantity} pcs

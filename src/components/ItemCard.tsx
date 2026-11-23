@@ -43,12 +43,9 @@ export default function ItemCard({ serialNumber, name, location, rack, status, q
       <div>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-black text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
-                {serialNumber}
-              </span>
+            <div>
               <span
-                className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
+                className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-bold mb-1.5 ${
                   isAvailable
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-rose-100 text-rose-800'
@@ -56,8 +53,8 @@ export default function ItemCard({ serialNumber, name, location, rack, status, q
               >
                 Sisa: {stock} pcs
               </span>
+              <h3 className="text-base font-bold text-slate-900">{name}</h3>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mt-2">{name}</h3>
           </div>
           <StatusBadge status={status} />
         </div>

@@ -378,8 +378,8 @@ export default function CabinetRackView({
   };
 
   // Delete item
-  const handleDeleteItem = async (serialNumber: string) => {
-    if (!confirm(`Hapus barang "${serialNumber}"?`)) return;
+  const handleDeleteItem = async (serialNumber: string, itemName?: string) => {
+    if (!confirm(`Hapus barang "${itemName || 'ini'}"?`)) return;
 
     try {
       const res = await fetch(`/api/items/${serialNumber}`, { method: 'DELETE' });
@@ -1102,7 +1102,7 @@ export default function CabinetRackView({
                                       Edit
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteItem(item.serialNumber)}
+                                      onClick={() => handleDeleteItem(item.serialNumber, item.name)}
                                       className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-white rounded transition-colors"
                                       title="Hapus Barang"
                                     >
@@ -1443,7 +1443,7 @@ export default function CabinetRackView({
                                 Edit
                               </button>
                               <button
-                                onClick={() => handleDeleteItem(item.serialNumber)}
+                                onClick={() => handleDeleteItem(item.serialNumber, item.name)}
                                 className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded"
                               >
                                 Hapus
