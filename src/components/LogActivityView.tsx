@@ -397,7 +397,9 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
       {timeFilter === 'custom' && (
         <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex flex-wrap items-center gap-3 text-xs">
           <span className="font-bold text-blue-900 flex items-center gap-1.5">
-            <span>📅</span>
+            <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
             <span>Rentang Tanggal Kustom:</span>
           </span>
           <div className="flex items-center gap-2">
@@ -671,9 +673,9 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                 placeholder="Cari SN, Petugas, Nama, Lokasi..."
                 className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none w-48 sm:w-60"
               />
-              <span className="absolute left-2.5 top-2 text-slate-400 text-xs font-bold">
-                🔍
-              </span>
+              <svg className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}

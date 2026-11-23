@@ -740,7 +740,7 @@ export default function CabinetRackView({
                                                 {item.quantity ?? 1} pcs
                                               </span>
                                               {(item.quantity ?? 1) <= (item.minStock ?? 3) && item.status === 'available' && (
-                                                <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">⚠</span>
+                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Menipis</span>
                                               )}
                                             </div>
                                           ))}
@@ -1149,8 +1149,8 @@ export default function CabinetRackView({
                           {item.quantity || 0} pcs
                         </span>
                         {item.quantity <= (item.minStock ?? 3) && item.status === 'available' && item.quantity > 0 && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
-                            ⚠ Stok Rendah
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                            Stok Rendah
                           </span>
                         )}
                       </div>

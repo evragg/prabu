@@ -264,7 +264,6 @@ export default function AdminPage() {
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          <span>📦</span>
           <span>Master Data Barang</span>
           <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
             {items.length}
@@ -278,7 +277,6 @@ export default function AdminPage() {
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          <span>👥</span>
           <span>Manajemen Pengguna</span>
         </button>
         <button
@@ -289,7 +287,6 @@ export default function AdminPage() {
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          <span>📍</span>
           <span>Lokasi Dinamis</span>
         </button>
       </div>
@@ -459,7 +456,7 @@ export default function AdminPage() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
-              <p className="text-xs text-slate-400 mt-1">Peringatan ⚠ muncul saat stok ≤ nilai ini</p>
+              <p className="text-xs text-slate-400 mt-1">Peringatan muncul saat stok ≤ nilai ini</p>
             </div>
             {/* URL Foto Barang */}
             <div>
@@ -544,7 +541,7 @@ export default function AdminPage() {
                           </span>
                           {(item.quantity ?? 1) <= (item.minStock ?? 3) && (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300">
-                              ⚠ Stok Rendah
+                              Stok Rendah
                             </span>
                           )}
                         </div>
