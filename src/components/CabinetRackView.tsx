@@ -107,13 +107,19 @@ export default function CabinetRackView({
 
   const rackOptions = useMemo(() => {
     if (isLab) {
-      return LAB_CABINETS.flatMap((cab) =>
-        cab.shelves.map((s) => `Lemari ${cab.id} - ${s.name}`)
-      );
+      return [
+        'Luar Lemari',
+        ...LAB_CABINETS.flatMap((cab) =>
+          cab.shelves.map((s) => `Lemari ${cab.id} - ${s.name}`)
+        ),
+      ];
     }
-    return CABINET_CONFIG.rows.flatMap((r) =>
-      CABINET_CONFIG.cols.map((c) => `Rak - ${r}${c}`)
-    );
+    return [
+      'Luar Lemari',
+      ...CABINET_CONFIG.rows.flatMap((r) =>
+        CABINET_CONFIG.cols.map((c) => `Rak - ${r}${c}`)
+      ),
+    ];
   }, [isLab]);
 
   useEffect(() => {
@@ -160,9 +166,44 @@ export default function CabinetRackView({
     name: '',
     quantity: 1,
     status: 'available',
+    rack: '',
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
+
+  // Items not in any cabinet slot or currently checked out
+  const outsideItems = useMemo(() => {
+    return items.filter((item) => {
+      if (item.status === 'checked_out') return true;
+
+      if (!isLab) {
+        const r = (item.rack || '').trim().toUpperCase();
+        const isValidSlot = CABINET_CONFIG.rows.some((row) =>
+          CABINET_CONFIG.cols.some((col) => {
+            const slotCode = `${row}${col}`;
+            return (
+              r === slotCode ||
+              r === `RAK - ${slotCode}` ||
+              r === `RAK ${slotCode}` ||
+              r.includes(slotCode)
+            );
+          })
+        );
+        return !isValidSlot;
+      } else {
+        const r = (item.rack || '').toLowerCase().trim();
+        const hasCab =
+          r.includes('lemari 1') ||
+          r.includes('lemari 2') ||
+          r.includes('lemari 3') ||
+          r.includes('l1') ||
+          r.includes('l2') ||
+          r.includes('l3');
+        const hasShelf = r.includes('tingkat') || r.includes('rak') || r.includes('sekat');
+        return !(hasCab && hasShelf);
+      }
+    });
+  }, [items, isLab]);
 
   // Contact Admin popup state
   const [showContactAdmin, setShowContactAdmin] = useState(false);
@@ -360,6 +401,7 @@ export default function CabinetRackView({
       name: item.name,
       quantity: item.quantity ?? 1,
       status: item.status,
+      rack: item.rack || 'Luar Lemari',
     });
     setEditError('');
   };
@@ -380,6 +422,7 @@ export default function CabinetRackView({
           name: editFormData.name.trim(),
           quantity: Math.max(0, editFormData.quantity),
           status: editFormData.status,
+          rack: editFormData.rack || 'Luar Lemari',
         }),
       });
 
@@ -746,70 +789,333 @@ export default function CabinetRackView({
               </div>
             ) : (
               /* ======================================================== */
-              /* MODULE ROOM: 32 LACI POLOS                               */
+              /* MODULE ROOM: LEMARI DI KIRI, BARANG LUAR LEMARI DI KANAN */
               /* ======================================================== */
-              <div className="w-full max-w-2xl bg-white rounded-xl border-2 border-slate-400 p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                  <div className="font-bold text-sm text-slate-800">
-                    Lemari Rak (4 Kolom x 8 Baris = 32 Laci)
+              <div className="w-full max-w-[1700px] mx-auto flex flex-col lg:flex-row gap-6 items-start">
+                {/* SEBELAH KIRI: ILUSTRASI LEMARI RAK (32 LACI) */}
+                <div className="w-full lg:w-7/12 xl:w-3/5 bg-white rounded-xl border-2 border-slate-400 p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                    <div className="font-bold text-sm text-slate-800">
+                      Lemari Rak (4 Kolom x 8 Baris = 32 Laci)
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      Klik laci untuk melihat isi barang
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    {CABINET_CONFIG.rows.map((row) =>
+                      CABINET_CONFIG.cols.map((col) => {
+                        const slotCode = `${row}${col}`;
+                        const slotItems = getItemsInSlot(slotCode);
+                        const hasItems = slotItems.length > 0;
+                        const isAvailable = slotItems.some((i) => i.status === 'available');
+
+                        const isHighlighted =
+                          highlightedSlot &&
+                          (highlightedSlot.includes(slotCode) ||
+                            highlightedSlot === `RAK - ${slotCode}`.toUpperCase() ||
+                            highlightedSlot === `RAK ${slotCode}`.toUpperCase() ||
+                            highlightedSlot === slotCode.toUpperCase());
+
+                        const isSelected = selectedSlot?.slotLabel === slotCode;
+
+                        return (
+                          <button
+                            key={slotCode}
+                            onClick={() => {
+                              setSelectedSlot({
+                                cabinetName: CABINET_CONFIG.name,
+                                slotLabel: slotCode,
+                                fullRackKey: `Rak - ${slotCode}`,
+                              });
+                            }}
+                            className={`relative h-14 rounded border p-2 flex flex-col justify-between text-left transition-colors ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-300'
+                                : isHighlighted
+                                ? 'border-purple-500 bg-purple-50 animate-pulse ring-1 ring-purple-300'
+                                : hasItems
+                                ? 'border-slate-300 bg-slate-50 hover:bg-slate-100'
+                                : 'border-slate-200 bg-white hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-mono text-xs font-bold text-slate-800">
+                                {slotCode}
+                              </span>
+                              {hasItems && (
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    isAvailable ? 'bg-emerald-500' : 'bg-rose-500'
+                                  }`}
+                                />
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-500 truncate">
+                              {hasItems ? `${slotItems.length} item` : 'Kosong'}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
-                  {CABINET_CONFIG.rows.map((row) =>
-                    CABINET_CONFIG.cols.map((col) => {
-                      const slotCode = `${row}${col}`;
-                      const slotItems = getItemsInSlot(slotCode);
-                      const hasItems = slotItems.length > 0;
-                      const isAvailable = slotItems.some((i) => i.status === 'available');
-
-                      const isHighlighted =
-                        highlightedSlot &&
-                        (highlightedSlot.includes(slotCode) ||
-                          highlightedSlot === `RAK - ${slotCode}`.toUpperCase() ||
-                          highlightedSlot === `RAK ${slotCode}`.toUpperCase() ||
-                          highlightedSlot === slotCode.toUpperCase());
-
-                      const isSelected = selectedSlot?.slotLabel === slotCode;
-
-                      return (
+                {/* SEBELAH KANAN: DAFTAR BARANG YANG TIDAK DI DALAM LEMARI */}
+                <div className="w-full lg:w-5/12 xl:w-2/5 bg-white rounded-xl border-2 border-slate-300 p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                      <h3 className="font-bold text-sm text-slate-800">
+                        Barang di Luar Lemari
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded-full">
+                        {outsideItems.length} item
+                      </span>
+                      {isAdmin && (
                         <button
-                          key={slotCode}
-                          onClick={() => {
-                            setSelectedSlot({
-                              cabinetName: CABINET_CONFIG.name,
-                              slotLabel: slotCode,
-                              fullRackKey: `Rak - ${slotCode}`,
-                            });
-                          }}
-                          className={`relative h-14 rounded border p-2 flex flex-col justify-between text-left transition-colors ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-300'
-                              : isHighlighted
-                              ? 'border-purple-500 bg-purple-50 animate-pulse ring-1 ring-purple-300'
-                              : hasItems
-                              ? 'border-slate-300 bg-slate-50 hover:bg-slate-100'
-                              : 'border-slate-200 bg-white hover:bg-slate-50'
-                          }`}
+                          onClick={() => handleOpenAddModal('Luar Lemari')}
+                          className="px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded border border-blue-200 transition-colors"
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <span className="font-mono text-xs font-bold text-slate-800">
-                              {slotCode}
-                            </span>
-                            {hasItems && (
-                              <span
-                                className={`w-2 h-2 rounded-full ${
-                                  isAvailable ? 'bg-emerald-500' : 'bg-rose-500'
-                                }`}
-                              />
-                            )}
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate">
-                            {hasItems ? `${slotItems.length} item` : 'Kosong'}
-                          </div>
+                          + Tambah
                         </button>
-                      );
-                    })
+                      )}
+                    </div>
+                  </div>
+
+                  {outsideItems.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-2.5 text-slate-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-600">Tidak ada barang di luar lemari</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Semua barang saat ini tersimpan di dalam laci lemari.</p>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleOpenAddModal('Luar Lemari')}
+                          className="mt-3 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors"
+                        >
+                          + Tambah Barang Luar Lemari
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+                      {outsideItems.map((item) => {
+                        const qty = item.quantity ?? 1;
+                        const isAvailable = item.status === 'available' && qty > 0;
+                        const isCheckedOut = item.status === 'checked_out';
+
+                        return editingItem?.id === item.id || editingItem?.serialNumber === item.serialNumber ? (
+                          <form
+                            key={item.id || item.serialNumber}
+                            onSubmit={handleSaveEdit}
+                            className="p-3 rounded-lg border border-blue-200 bg-blue-50/50 space-y-2.5 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-800">Edit Barang</span>
+                              <button
+                                type="button"
+                                onClick={() => setEditingItem(null)}
+                                className="text-slate-400 hover:text-slate-600"
+                              >
+                                Batal ✕
+                              </button>
+                            </div>
+
+                            {editError && (
+                              <div className="p-2 rounded bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                                {editError}
+                              </div>
+                            )}
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                Nama Barang *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="Nama Barang"
+                                value={editFormData.name}
+                                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                Posisi / Rak Laci
+                              </label>
+                              <select
+                                value={editFormData.rack}
+                                onChange={(e) => setEditFormData({ ...editFormData, rack: e.target.value })}
+                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs"
+                              >
+                                {rackOptions.map((r) => (
+                                  <option key={r} value={r}>
+                                    {r}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                  Jumlah (Qty) *
+                                </label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  required
+                                  value={editFormData.quantity}
+                                  onChange={(e) =>
+                                    setEditFormData({
+                                      ...editFormData,
+                                      quantity: Math.max(0, parseInt(e.target.value) || 0),
+                                    })
+                                  }
+                                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                  Status
+                                </label>
+                                <select
+                                  value={editFormData.status}
+                                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs"
+                                >
+                                  <option value="available">Available</option>
+                                  <option value="checked_out">Checked Out</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setEditingItem(null)}
+                                className="px-2.5 py-1 text-slate-600 hover:text-slate-800"
+                              >
+                                Batal
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={editLoading}
+                                className="px-3 py-1 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                {editLoading ? 'Menyimpan...' : 'Simpan'}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div
+                            key={item.id || item.serialNumber}
+                            className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 transition-all text-xs"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="font-semibold text-slate-700">
+                                    {qty} pcs
+                                  </span>
+                                  {item.category && (
+                                    <span className="text-[11px] text-slate-400">
+                                      • {item.category}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                  isCheckedOut
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : isAvailable
+                                    ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                                    : 'bg-rose-50 text-rose-700'
+                                }`}
+                              >
+                                {isCheckedOut ? 'Sedang Dipinjam' : 'Di Luar Lemari'}
+                              </span>
+                            </div>
+
+                            <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center justify-between">
+                              <span className="text-[11px] text-slate-500">
+                                Posisi: <strong className="text-slate-700">{item.rack || 'Luar Lemari'}</strong>
+                              </span>
+
+                              <div className="flex items-center gap-1.5">
+                                {isAvailable ? (
+                                  isAdmin ? (
+                                    <Link
+                                      href={`/scan/${locationSlug}?serial=${item.serialNumber}&action=checkout`}
+                                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+                                    >
+                                      Ambil
+                                    </Link>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setContactAdminItem(item);
+                                        setShowContactAdmin(true);
+                                      }}
+                                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+                                    >
+                                      Ambil
+                                    </button>
+                                  )
+                                ) : isAdmin ? (
+                                  <Link
+                                    href={`/scan/${locationSlug}?serial=${item.serialNumber}&action=return`}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium transition-colors"
+                                  >
+                                    Kembalikan
+                                  </Link>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setContactAdminItem(item);
+                                      setShowContactAdmin(true);
+                                    }}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium transition-colors"
+                                  >
+                                    Kembalikan
+                                  </button>
+                                )}
+
+                                {isAdmin && (
+                                  <>
+                                    <button
+                                      onClick={() => handleStartEdit(item)}
+                                      className="px-2 py-1 text-slate-600 hover:text-blue-600 hover:bg-white rounded transition-colors"
+                                      title="Pindahkan / Edit Barang"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteItem(item.serialNumber)}
+                                      className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-white rounded transition-colors"
+                                      title="Hapus Barang"
+                                    >
+                                      Hapus
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </div>
@@ -985,6 +1291,23 @@ export default function CabinetRackView({
                             onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                             className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs"
                           />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            Posisi / Rak Laci
+                          </label>
+                          <select
+                            value={editFormData.rack}
+                            onChange={(e) => setEditFormData({ ...editFormData, rack: e.target.value })}
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs"
+                          >
+                            {rackOptions.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
