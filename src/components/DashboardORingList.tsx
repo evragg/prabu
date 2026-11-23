@@ -73,7 +73,7 @@ export default function DashboardORingList({ initialItems }: DashboardORingListP
       if (categoryFilter !== 'all' && item.category !== categoryFilter) {
         return false;
       }
-      // Search filter across all attributes (Plat Number, Nama, Rak, Lokasi, Kategori)
+      // Search filter across all attributes (Kode, Nama, Rak, Lokasi, Kategori)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchSerial = (item.serialNumber || '').toLowerCase().includes(q);

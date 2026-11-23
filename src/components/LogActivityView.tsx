@@ -228,7 +228,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
       alert('Tidak ada data riwayat untuk diekspor');
       return;
     }
-    const headers = ['Waktu', 'Aksi', 'Plat Number', 'Nama Barang', 'Jumlah (Pcs)', 'Petugas / Pengambil', 'Lokasi'];
+    const headers = ['Waktu', 'Aksi', 'Kode Barang', 'Nama Barang', 'Jumlah (Pcs)', 'Petugas / Pengambil', 'Lokasi'];
     const rows = tableLogs.map((l) => [
       `"${new Date(l.timestamp).toLocaleString('id-ID')}"`,
       l.action === 'checkout' ? '"Keluar (Ambil)"' : l.action === 'return' ? '"Masuk (Kembali)"' : '"Masuk (Stok Baru)"',
@@ -755,7 +755,7 @@ export default function LogActivityView({ initialLogs }: LogActivityViewProps) {
                 <th className="px-4 py-3">Petugas</th>
                 <th className="px-4 py-3">Aksi</th>
                 <th className="px-4 py-3">Jumlah (Pcs)</th>
-                <th className="px-4 py-3">Plat Number</th>
+                <th className="px-4 py-3">Kode Barang</th>
                 <th className="px-4 py-3">Nama Barang</th>
                 <th className="px-4 py-3">Lokasi</th>
               </tr>

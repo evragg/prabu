@@ -205,7 +205,7 @@ function ScanFormInner({ location }: { location: string }) {
           <option value="">-- Pilih Barang --</option>
           {filteredItems.map((item) => (
             <option key={item.serialNumber} value={item.serialNumber}>
-              {item.serialNumber} - {item.name} (Stok: {item.quantity} pcs)
+              {item.name} (Stok: {item.quantity} pcs)
             </option>
           ))}
         </select>
@@ -325,7 +325,7 @@ function ScanFormInner({ location }: { location: string }) {
               setQuantity(1);
             } else {
               setSelectedSerial(scannedSerial);
-              setError(`Barang dengan Plat Number "${scannedSerial}" tidak ditemukan di lokasi ini.`);
+              setError(`Barang "${scannedSerial}" tidak ditemukan di lokasi ini.`);
             }
           }}
           onClose={() => setShowScanner(false)}

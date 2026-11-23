@@ -122,7 +122,7 @@ export default function QRCameraScanner({ onScan, onClose }: QRCameraScannerProp
 
         <div className="px-5 pb-4 text-center">
           <p className="text-[11px] text-slate-400">
-            Jika QR tidak terbaca, masukkan Plat Number secara manual di form
+            Jika QR tidak terbaca, pilih barang secara manual di form
           </p>
         </div>
       </div>
