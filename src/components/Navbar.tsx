@@ -103,70 +103,18 @@ export default function Navbar() {
         <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center space-x-6">
-              <Link href="/" className="flex items-center space-x-3 group">
-                <div className="bg-white px-2.5 py-1 rounded-lg shadow-sm flex items-center justify-center h-8 transition-transform group-hover:scale-105">
-                  <img
-                    src="/slb-logo.png"
-                    alt="SLB Logo"
-                    className="h-5 w-auto object-contain"
-                  />
-                </div>
-                <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-100 transition-colors">
-                  Inventory System
-                </span>
-              </Link>
-
-              {/* Desktop Quick Nav */}
-              <div className="hidden md:flex items-center space-x-1">
-                <Link
-                  href="/"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    pathname === '/'
-                      ? 'bg-blue-900/90 text-white shadow-inner'
-                      : 'text-blue-100 hover:bg-blue-700/60 hover:text-white'
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/units"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
-                    pathname.startsWith('/units')
-                      ? 'bg-blue-900/90 text-white shadow-inner'
-                      : 'text-blue-100 hover:bg-blue-700/60 hover:text-white'
-                  }`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1" />
-                  </svg>
-                  <span>Inventori Unit</span>
-                </Link>
-                <Link
-                  href="/logs"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    pathname === '/logs'
-                      ? 'bg-blue-900/90 text-white shadow-inner'
-                      : 'text-blue-100 hover:bg-blue-700/60 hover:text-white'
-                  }`}
-                >
-                  Log Activity
-                </Link>
-                {role === 'admin' && (
-                  <Link
-                    href="/admin"
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
-                      pathname === '/admin'
-                        ? 'bg-blue-900/90 text-white shadow-inner'
-                        : 'text-blue-100 hover:bg-blue-700/60 hover:text-white'
-                    }`}
-                  >
-                    Admin
-                  </Link>
-                )}
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="bg-white px-2.5 py-1 rounded-lg shadow-sm flex items-center justify-center h-8 transition-transform group-hover:scale-105">
+                <img
+                  src="/slb-logo.png"
+                  alt="SLB Logo"
+                  className="h-5 w-auto object-contain"
+                />
               </div>
-            </div>
+              <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-100 transition-colors">
+                Inventory System
+              </span>
+            </Link>
 
             {/* Right: Role indicator & Hamburger Menu (Tiga Garis) */}
             <div className="flex items-center space-x-3">
