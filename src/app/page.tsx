@@ -51,6 +51,30 @@ export default async function HomePage() {
       <div>
         <h2 className="text-xl font-semibold text-blue-900 mb-4">Akses Lemari & Lokasi</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Shortcut Inventori Unit Mobil */}
+          <Link
+            href="/units"
+            className="bg-gradient-to-br from-blue-900 to-blue-800 text-white rounded-xl shadow-sm p-6 hover:shadow-md hover:from-blue-800 hover:to-blue-700 transition-all group border border-blue-950"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-white">Inventori Unit Mobil</h3>
+                  <span className="text-[10px] bg-blue-500/40 text-blue-100 px-2 py-0.5 rounded-full font-bold uppercase">
+                    Mobil
+                  </span>
+                </div>
+                <p className="text-sm text-blue-200">Daftar muatan & perkakas Unit 9717, dll.</p>
+              </div>
+            </div>
+          </Link>
+
           {locations.map((loc) => (
             <Link
               key={loc}

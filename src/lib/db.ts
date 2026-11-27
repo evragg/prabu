@@ -38,6 +38,36 @@ export interface LogEntry {
   quantity?: number;
 }
 
+export interface Unit {
+  id: string;
+  name: string;
+  plateNumber?: string | null;
+  vehicleType?: string | null;
+  driver?: string | null;
+  status: string; // "active", "standby", "maintenance"
+  notes?: string | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  items?: UnitItem[];
+}
+
+export interface UnitItem {
+  id: string;
+  unitId: string;
+  serialNumber: string;
+  name: string;
+  category: string;
+  compartment: string;
+  quantity: number;
+  unitType: string;
+  minStock: number;
+  condition: string;
+  status: string; // "available", "in_use", "missing"
+  notes?: string | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
 // Fallback Memory/JSON Store
 const FALLBACK_FILE = path.join(process.cwd(), 'data', 'inventory.json');
 
@@ -684,5 +714,502 @@ export async function deleteUser(id: string): Promise<boolean> {
       return true;
     }
     return false;
+  }
+}
+
+// ================= UNIT (MOBIL) MANAGEMENT =================
+
+const UNITS_FALLBACK_FILE = path.join(process.cwd(), 'data', 'units.json');
+
+function getUnitsFallback(): Unit[] {
+  try {
+    if (fs.existsSync(UNITS_FALLBACK_FILE)) {
+      const raw = fs.readFileSync(UNITS_FALLBACK_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function saveUnitsFallback(units: Unit[]) {
+  try {
+    fs.writeFileSync(UNITS_FALLBACK_FILE, JSON.stringify(units, null, 2), 'utf-8');
+  } catch {
+    // ignore
+  }
+}
+
+export async function getUnits(): Promise<Unit[]> {
+  try {
+    const units = await prisma.unit.findMany({
+      include: {
+        items: {
+          orderBy: { name: 'asc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+    if (units.length > 0) {
+      saveUnitsFallback(units as unknown as Unit[]);
+      return units as unknown as Unit[];
+    }
+    return getUnitsFallback();
+  } catch (err) {
+    console.warn('DB getUnits failed, using fallback:', err);
+    return getUnitsFallback();
+  }
+}
+
+export async function getUnitByIdOrName(idOrName: string): Promise<Unit | null> {
+  try {
+    const target = decodeURIComponent(idOrName).trim();
+    const unit = await prisma.unit.findFirst({
+      where: {
+        OR: [
+          { id: target },
+          { name: { equals: target, mode: 'insensitive' } },
+        ],
+      },
+      include: {
+        items: {
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+    if (unit) return unit as unknown as Unit;
+  } catch {
+    // ignore, use fallback
+  }
+
+  const fb = getUnitsFallback();
+  const normalized = decodeURIComponent(idOrName).trim().toLowerCase();
+  return (
+    fb.find(
+      (u) =>
+        u.id.toLowerCase() === normalized ||
+        u.name.toLowerCase() === normalized
+    ) || null
+  );
+}
+
+export async function createUnit(data: {
+  name: string;
+  plateNumber?: string;
+  vehicleType?: string;
+  driver?: string;
+  status?: string;
+  notes?: string;
+}): Promise<Unit> {
+  const cleanName = data.name.trim();
+  try {
+    const created = await prisma.unit.create({
+      data: {
+        name: cleanName,
+        plateNumber: data.plateNumber?.trim() || null,
+        vehicleType: data.vehicleType?.trim() || null,
+        driver: data.driver?.trim() || null,
+        status: data.status || 'active',
+        notes: data.notes?.trim() || null,
+      },
+      include: {
+        items: true,
+      },
+    });
+    const fb = getUnitsFallback();
+    fb.push(created as unknown as Unit);
+    saveUnitsFallback(fb);
+    return created as unknown as Unit;
+  } catch (err) {
+    console.warn('DB createUnit failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    const newUnit: Unit = {
+      id: `unit-${Date.now()}`,
+      name: cleanName,
+      plateNumber: data.plateNumber?.trim() || null,
+      vehicleType: data.vehicleType?.trim() || null,
+      driver: data.driver?.trim() || null,
+      status: data.status || 'active',
+      notes: data.notes?.trim() || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      items: [],
+    };
+    fb.push(newUnit);
+    saveUnitsFallback(fb);
+    return newUnit;
+  }
+}
+
+export async function updateUnit(
+  id: string,
+  data: {
+    name?: string;
+    plateNumber?: string;
+    vehicleType?: string;
+    driver?: string;
+    status?: string;
+    notes?: string;
+  }
+): Promise<Unit | null> {
+  const updateData: Record<string, any> = {};
+  if (data.name !== undefined) updateData.name = data.name.trim();
+  if (data.plateNumber !== undefined) updateData.plateNumber = data.plateNumber?.trim() || null;
+  if (data.vehicleType !== undefined) updateData.vehicleType = data.vehicleType?.trim() || null;
+  if (data.driver !== undefined) updateData.driver = data.driver?.trim() || null;
+  if (data.status !== undefined) updateData.status = data.status;
+  if (data.notes !== undefined) updateData.notes = data.notes?.trim() || null;
+
+  try {
+    const updated = await prisma.unit.update({
+      where: { id },
+      data: updateData,
+      include: { items: { orderBy: { name: 'asc' } } },
+    });
+    const fb = getUnitsFallback();
+    const idx = fb.findIndex((u) => u.id === id);
+    if (idx !== -1) {
+      fb[idx] = updated as unknown as Unit;
+      saveUnitsFallback(fb);
+    }
+    return updated as unknown as Unit;
+  } catch (err) {
+    console.warn('DB updateUnit failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    const idx = fb.findIndex((u) => u.id === id);
+    if (idx !== -1) {
+      fb[idx] = {
+        ...fb[idx],
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      };
+      saveUnitsFallback(fb);
+      return fb[idx];
+    }
+    return null;
+  }
+}
+
+export async function deleteUnit(id: string): Promise<boolean> {
+  try {
+    await prisma.unit.delete({ where: { id } });
+    const fb = getUnitsFallback();
+    const filtered = fb.filter((u) => u.id !== id);
+    saveUnitsFallback(filtered);
+    return true;
+  } catch (err) {
+    console.warn('DB deleteUnit failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    const filtered = fb.filter((u) => u.id !== id);
+    saveUnitsFallback(filtered);
+    return true;
+  }
+}
+
+export async function addUnitItem(
+  unitId: string,
+  data: {
+    serialNumber: string;
+    name: string;
+    category?: string;
+    compartment?: string;
+    quantity?: number;
+    unitType?: string;
+    minStock?: number;
+    condition?: string;
+    status?: string;
+    notes?: string;
+  },
+  person: string = 'Petugas'
+): Promise<UnitItem> {
+  const serialNumber = data.serialNumber.trim();
+  const name = data.name.trim();
+  const category = (data.category || 'Tools').trim();
+  const compartment = (data.compartment || 'Bagasi Belakang').trim();
+  const quantity = Math.max(0, data.quantity ?? 1);
+  const unitType = (data.unitType || 'Pcs').trim();
+  const minStock = Math.max(0, data.minStock ?? 1);
+  const condition = (data.condition || 'Good').trim();
+  const status = data.status || (quantity <= 0 ? 'in_use' : 'available');
+  const notes = data.notes?.trim() || null;
+
+  try {
+    const created = await prisma.unitItem.create({
+      data: {
+        unitId,
+        serialNumber,
+        name,
+        category,
+        compartment,
+        quantity,
+        unitType,
+        minStock,
+        condition,
+        status,
+        notes,
+      },
+    });
+
+    // Cari nama unit untuk log
+    const unit = await prisma.unit.findUnique({ where: { id: unitId }, select: { name: true } });
+    const unitName = unit ? unit.name : 'Unit Mobil';
+
+    await addLog({
+      serialNumber,
+      itemName: name,
+      action: 'create',
+      person,
+      location: unitName,
+      quantity,
+      timestamp: new Date().toISOString(),
+    });
+
+    const fb = getUnitsFallback();
+    const u = fb.find((x) => x.id === unitId);
+    if (u) {
+      if (!u.items) u.items = [];
+      u.items.push(created as unknown as UnitItem);
+      saveUnitsFallback(fb);
+    }
+
+    return created as unknown as UnitItem;
+  } catch (err) {
+    console.warn('DB addUnitItem failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    const u = fb.find((x) => x.id === unitId);
+    const newItem: UnitItem = {
+      id: `uitem-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      unitId,
+      serialNumber,
+      name,
+      category,
+      compartment,
+      quantity,
+      unitType,
+      minStock,
+      condition,
+      status,
+      notes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    if (u) {
+      if (!u.items) u.items = [];
+      u.items.push(newItem);
+      saveUnitsFallback(fb);
+    }
+    await addLog({
+      serialNumber,
+      itemName: name,
+      action: 'create',
+      person,
+      location: u?.name || 'Unit Mobil',
+      quantity,
+      timestamp: new Date().toISOString(),
+    });
+    return newItem;
+  }
+}
+
+export async function updateUnitItem(
+  id: string,
+  data: Partial<Omit<UnitItem, 'id' | 'unitId' | 'createdAt' | 'updatedAt'>>
+): Promise<UnitItem | null> {
+  const updateData: Record<string, any> = {};
+  if (data.serialNumber !== undefined) updateData.serialNumber = data.serialNumber.trim();
+  if (data.name !== undefined) updateData.name = data.name.trim();
+  if (data.category !== undefined) updateData.category = data.category.trim();
+  if (data.compartment !== undefined) updateData.compartment = data.compartment.trim();
+  if (data.quantity !== undefined) {
+    updateData.quantity = Math.max(0, data.quantity);
+    if (data.status === undefined) {
+      updateData.status = updateData.quantity <= 0 ? 'in_use' : 'available';
+    }
+  }
+  if (data.unitType !== undefined) updateData.unitType = data.unitType.trim();
+  if (data.minStock !== undefined) updateData.minStock = Math.max(0, data.minStock);
+  if (data.condition !== undefined) updateData.condition = data.condition.trim();
+  if (data.status !== undefined) updateData.status = data.status;
+  if (data.notes !== undefined) updateData.notes = data.notes?.trim() || null;
+
+  try {
+    const updated = await prisma.unitItem.update({
+      where: { id },
+      data: updateData,
+    });
+
+    const fb = getUnitsFallback();
+    for (const u of fb) {
+      if (u.items) {
+        const idx = u.items.findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          u.items[idx] = updated as unknown as UnitItem;
+          saveUnitsFallback(fb);
+          break;
+        }
+      }
+    }
+    return updated as unknown as UnitItem;
+  } catch (err) {
+    console.warn('DB updateUnitItem failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    for (const u of fb) {
+      if (u.items) {
+        const idx = u.items.findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          u.items[idx] = {
+            ...u.items[idx],
+            ...updateData,
+            updatedAt: new Date().toISOString(),
+          };
+          saveUnitsFallback(fb);
+          return u.items[idx];
+        }
+      }
+    }
+    return null;
+  }
+}
+
+export async function deleteUnitItem(
+  id: string,
+  person: string = 'Petugas'
+): Promise<boolean> {
+  try {
+    const item = await prisma.unitItem.findUnique({
+      where: { id },
+      include: { unit: { select: { name: true } } },
+    });
+    if (item) {
+      await addLog({
+        serialNumber: item.serialNumber,
+        itemName: item.name,
+        action: 'delete',
+        person,
+        location: item.unit?.name || 'Unit Mobil',
+        quantity: item.quantity,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    await prisma.unitItem.delete({ where: { id } });
+
+    const fb = getUnitsFallback();
+    for (const u of fb) {
+      if (u.items) {
+        const idx = u.items.findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          u.items.splice(idx, 1);
+          saveUnitsFallback(fb);
+          break;
+        }
+      }
+    }
+    return true;
+  } catch (err) {
+    console.warn('DB deleteUnitItem failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    for (const u of fb) {
+      if (u.items) {
+        const idx = u.items.findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          const removed = u.items.splice(idx, 1)[0];
+          saveUnitsFallback(fb);
+          addLog({
+            serialNumber: removed.serialNumber,
+            itemName: removed.name,
+            action: 'delete',
+            person,
+            location: u.name,
+            quantity: removed.quantity,
+            timestamp: new Date().toISOString(),
+          });
+          break;
+        }
+      }
+    }
+    return true;
+  }
+}
+
+export async function adjustUnitItemQuantity(
+  id: string,
+  delta: number,
+  person: string = 'Petugas',
+  actionType: 'checkout' | 'return' | 'adjust' = 'checkout',
+  note?: string
+): Promise<UnitItem | null> {
+  try {
+    const current = await prisma.unitItem.findUnique({
+      where: { id },
+      include: { unit: true },
+    });
+    if (!current) return null;
+
+    const newQty = Math.max(0, current.quantity + delta);
+    const newStatus = newQty <= 0 ? 'in_use' : 'available';
+
+    const updated = await prisma.unitItem.update({
+      where: { id },
+      data: {
+        quantity: newQty,
+        status: newStatus,
+        notes: note ? (current.notes ? `${current.notes} | ${note}` : note) : current.notes,
+      },
+    });
+
+    await addLog({
+      serialNumber: current.serialNumber,
+      itemName: current.name,
+      action: actionType,
+      person,
+      location: current.unit?.name || 'Unit Mobil',
+      quantity: Math.abs(delta),
+      timestamp: new Date().toISOString(),
+    });
+
+    const fb = getUnitsFallback();
+    for (const u of fb) {
+      if (u.items) {
+        const idx = u.items.findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          u.items[idx] = updated as unknown as UnitItem;
+          saveUnitsFallback(fb);
+          break;
+        }
+      }
+    }
+    return updated as unknown as UnitItem;
+  } catch (err) {
+    console.warn('DB adjustUnitItemQuantity failed, using fallback:', err);
+    const fb = getUnitsFallback();
+    for (const u of fb) {
+      if (u.items) {
+        const idx = u.items.findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          const item = u.items[idx];
+          item.quantity = Math.max(0, item.quantity + delta);
+          item.status = item.quantity <= 0 ? 'in_use' : 'available';
+          if (note) {
+            item.notes = item.notes ? `${item.notes} | ${note}` : note;
+          }
+          item.updatedAt = new Date().toISOString();
+          saveUnitsFallback(fb);
+
+          await addLog({
+            serialNumber: item.serialNumber,
+            itemName: item.name,
+            action: actionType,
+            person,
+            location: u.name,
+            quantity: Math.abs(delta),
+            timestamp: new Date().toISOString(),
+          });
+          return item;
+        }
+      }
+    }
+    return null;
   }
 }

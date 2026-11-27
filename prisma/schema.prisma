@@ -53,3 +53,36 @@ model Location {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Unit {
+  id          String     @id @default(cuid())
+  name        String     @unique // e.g. "Unit 9717"
+  plateNumber String?    // e.g. "B 9717 SLB"
+  vehicleType String?    // e.g. "Toyota Hilux 4x4"
+  driver      String?    // e.g. "Crew Field / Driver"
+  status      String     @default("active") // "active", "standby", "maintenance"
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       UnitItem[]
+}
+
+model UnitItem {
+  id           String   @id @default(cuid())
+  unitId       String
+  serialNumber String
+  name         String
+  category     String   @default("Tools")
+  compartment  String   @default("Bagasi") // Posisi/lokasi dalam mobil (e.g. Toolbox, Kabin, Bagasi)
+  quantity     Int      @default(1)
+  unitType     String   @default("Pcs")    // Pcs, Set, Roll, Box, Unit
+  minStock     Int      @default(1)
+  condition    String   @default("Good")   // Good, Damaged, Needs Check
+  status       String   @default("available") // available, in_use, missing
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  unit         Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, serialNumber])
+}
