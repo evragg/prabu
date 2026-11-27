@@ -72,17 +72,15 @@ model UnitItem {
   unitId       String
   serialNumber String
   name         String
-  category     String   @default("Tools")
-  compartment  String   @default("Bagasi") // Posisi/lokasi dalam mobil (e.g. Toolbox, Kabin, Bagasi)
+  category     String   @default("Umum")
+  compartment  String?  @default("")
   quantity     Int      @default(1)
-  unitType     String   @default("Pcs")    // Pcs, Set, Roll, Box, Unit
+  unitType     String?  @default("Pcs")
   minStock     Int      @default(1)
-  condition    String   @default("Good")   // Good, Damaged, Needs Check
-  status       String   @default("available") // available, in_use, missing
+  condition    String?  @default("Good")
+  status       String   @default("available")
   notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   unit         Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-
-  @@unique([unitId, serialNumber])
 }
